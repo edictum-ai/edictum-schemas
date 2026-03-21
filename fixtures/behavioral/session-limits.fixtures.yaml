@@ -1,0 +1,99 @@
+suite: session-limits
+version: 1
+description: "Session contracts that enforce call limits"
+
+fixtures:
+  - id: "session-001"
+    description: "Total tool calls exceeding max_tool_calls is denied"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: limit-total-calls
+          type: session
+          limits:
+            max_tool_calls: 10
+          then:
+            effect: deny
+            message: "Session limit of 10 tool calls exceeded"
+
+    session:
+      tool_calls: 11
+
+    envelope:
+      tool_name: "Bash"
+      arguments:
+        command: "echo next"
+
+    expected:
+      verdict: denied
+      message_contains: "10 tool calls"
+
+  - id: "session-002"
+    description: "Tool calls within limit are allowed"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: limit-total-calls
+          type: session
+          limits:
+            max_tool_calls: 10
+          then:
+            effect: deny
+            message: "Session limit of 10 tool calls exceeded"
+
+    session:
+      tool_calls: 5
+
+    envelope:
+      tool_name: "Bash"
+      arguments:
+        command: "echo ok"
+
+    expected:
+      verdict: allowed
+
+  - id: "session-003"
+    description: "Per-tool call limit exceeded for specific tool is denied"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: limit-bash-calls
+          type: session
+          limits:
+            max_calls_per_tool:
+              Bash: 3
+          then:
+            effect: deny
+            message: "Bash call limit of 3 exceeded"
+
+    session:
+      tool_calls: 5
+      per_tool:
+        Bash: 4
+
+    envelope:
+      tool_name: "Bash"
+      arguments:
+        command: "echo again"
+
+    expected:
+      verdict: denied
+      message_contains: "Bash"

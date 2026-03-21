@@ -1,0 +1,96 @@
+suite: observe-mode
+version: 1
+description: "Observe mode logs but does not block tool calls"
+
+fixtures:
+  - id: "observe-001"
+    description: "Contract in observe mode allows call that would be denied in enforce"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: observe
+      contracts:
+        - id: block-rm
+          type: pre
+          tool: "Bash"
+          when:
+            args.command:
+              contains: "rm -rf"
+          then:
+            effect: deny
+            message: "Cannot run rm -rf"
+
+    envelope:
+      tool_name: "Bash"
+      arguments:
+        command: "rm -rf /important"
+
+    expected:
+      verdict: allowed
+      audit_action: observed
+
+  - id: "observe-002"
+    description: "Per-contract observe mode overrides enforce default"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: block-rm
+          type: pre
+          mode: observe
+          tool: "Bash"
+          when:
+            args.command:
+              contains: "rm -rf"
+          then:
+            effect: deny
+            message: "Cannot run rm -rf"
+
+    envelope:
+      tool_name: "Bash"
+      arguments:
+        command: "rm -rf /important"
+
+    expected:
+      verdict: allowed
+      audit_action: observed
+
+  - id: "observe-003"
+    description: "observe_alongside logs observation while still enforcing"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      observe_alongside: true
+      contracts:
+        - id: block-rm
+          type: pre
+          tool: "Bash"
+          when:
+            args.command:
+              contains: "rm -rf"
+          then:
+            effect: deny
+            message: "Cannot run rm -rf"
+
+    envelope:
+      tool_name: "Bash"
+      arguments:
+        command: "rm -rf /important"
+
+    expected:
+      verdict: denied
+      message_contains: "rm -rf"

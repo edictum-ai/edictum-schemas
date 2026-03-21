@@ -1,0 +1,69 @@
+suite: postcondition-redact
+version: 1
+description: "Postcondition contracts that redact tool results"
+
+fixtures:
+  - id: "post-redact-001"
+    description: "Result matching redact condition triggers redaction"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: redact-tokens
+          type: post
+          tool: "Bash"
+          when:
+            result.output:
+              matches: "Bearer [A-Za-z0-9._-]+"
+          then:
+            effect: redact
+            message: "Redacted bearer token from output"
+
+    envelope:
+      tool_name: "Bash"
+      arguments:
+        command: "curl -v https://api.example.com"
+
+    result:
+      output: "Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.test.sig"
+
+    expected:
+      verdict: redacted
+      message_contains: "bearer token"
+
+  - id: "post-redact-002"
+    description: "Result not matching redact condition passes through"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: redact-tokens
+          type: post
+          tool: "Bash"
+          when:
+            result.output:
+              matches: "Bearer [A-Za-z0-9._-]+"
+          then:
+            effect: redact
+            message: "Redacted bearer token from output"
+
+    envelope:
+      tool_name: "Bash"
+      arguments:
+        command: "echo ok"
+
+    result:
+      output: "ok"
+
+    expected:
+      verdict: allowed
