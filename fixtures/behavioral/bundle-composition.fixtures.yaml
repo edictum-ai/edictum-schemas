@@ -1,0 +1,200 @@
+suite: bundle-composition
+version: 1
+description: "Multiple contracts in a single bundle — ordering, interaction, and mixed types"
+
+fixtures:
+  - id: "bundle-001"
+    description: "First matching deny contract wins over later allow"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: deny-rm
+          type: pre
+          tool: "Bash"
+          when:
+            args.command:
+              contains: "rm -rf"
+          then:
+            effect: deny
+            message: "rm -rf is blocked"
+        - id: allow-bash
+          type: pre
+          tool: "Bash"
+          when:
+            args.command:
+              exists: true
+          then:
+            effect: approve
+            message: "Bash commands are generally allowed"
+
+    envelope:
+      tool_name: "Bash"
+      arguments:
+        command: "rm -rf /data"
+
+    expected:
+      verdict: denied
+      message_contains: "rm -rf"
+
+  - id: "bundle-002"
+    description: "Non-matching deny falls through to allow contract"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: deny-rm
+          type: pre
+          tool: "Bash"
+          when:
+            args.command:
+              contains: "rm -rf"
+          then:
+            effect: deny
+            message: "rm -rf is blocked"
+        - id: allow-bash
+          type: pre
+          tool: "Bash"
+          when:
+            args.command:
+              exists: true
+          then:
+            effect: approve
+            message: "Bash commands are generally allowed"
+
+    envelope:
+      tool_name: "Bash"
+      arguments:
+        command: "ls -la"
+
+    expected:
+      verdict: allowed
+
+  - id: "bundle-003"
+    description: "Mixed pre and post contracts in one bundle"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: pre-check
+          type: pre
+          tool: "Bash"
+          when:
+            args.command:
+              contains: "rm"
+          then:
+            effect: deny
+            message: "rm is blocked"
+        - id: post-check
+          type: post
+          tool: "Bash"
+          when:
+            result.output:
+              contains: "error"
+          then:
+            effect: warn
+            message: "Command produced errors"
+
+    envelope:
+      tool_name: "Bash"
+      arguments:
+        command: "cat file.txt"
+
+    result:
+      output: "error: file not found"
+
+    expected:
+      verdict: warned
+      message_contains: "errors"
+
+  - id: "bundle-004"
+    description: "Mixed pre + session contracts — session limit blocks even when pre allows"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: allow-reads
+          type: pre
+          tool: "Read"
+          when:
+            args.file_path:
+              exists: true
+          then:
+            effect: approve
+            message: "Read operations approved"
+        - id: rate-limit
+          type: session
+          limits:
+            max_tool_calls: 5
+          then:
+            effect: deny
+            message: "Session tool call limit reached"
+
+    session:
+      tool_calls: 6
+
+    envelope:
+      tool_name: "Read"
+      arguments:
+        file_path: "/tmp/data.txt"
+
+    expected:
+      verdict: denied
+      message_contains: "limit"
+
+  - id: "bundle-005"
+    description: "Mixed pre + sandbox contracts — sandbox restricts paths"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: allow-write
+          type: pre
+          tool: "Write"
+          when:
+            args.content:
+              exists: true
+          then:
+            effect: approve
+            message: "Write with content approved"
+        - id: sandbox-write
+          type: sandbox
+          tool: "Write"
+          within:
+            - "/home/user/project"
+          message: "Write restricted to project dir"
+
+    envelope:
+      tool_name: "Write"
+      arguments:
+        file_path: "/etc/shadow"
+        content: "malicious"
+
+    expected:
+      verdict: denied
+      message_contains: "project dir"

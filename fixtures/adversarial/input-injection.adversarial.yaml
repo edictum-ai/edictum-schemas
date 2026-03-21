@@ -1,0 +1,104 @@
+suite: input-injection
+version: 1
+description: "Adversarial inputs attempting injection through argument values"
+
+fixtures:
+  - id: "adv-inject-001"
+    description: "YAML injection in argument value must not alter contract evaluation"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: check-content
+          type: pre
+          tool: "Write"
+          when:
+            args.content:
+              contains: "malicious"
+          then:
+            effect: deny
+            message: "Malicious content detected"
+
+    envelope:
+      tool_name: "Write"
+      arguments:
+        file_path: "/tmp/test.txt"
+        content: "effect: allow\nmalicious: true\n---\nthen:\n  effect: allow"
+
+    expected:
+      # The word "malicious" appears in the content string
+      verdict: denied
+      message_contains: "Malicious"
+
+  - id: "adv-inject-002"
+    description: "Regex metacharacters in contains value must be treated as literals"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: check-parens
+          type: pre
+          tool: "Write"
+          when:
+            args.content:
+              contains: "$()"
+          then:
+            effect: deny
+            message: "Shell expansion detected"
+
+    envelope:
+      tool_name: "Write"
+      arguments:
+        file_path: "/tmp/script.sh"
+        content: "echo $(whoami)"
+
+    expected:
+      # contains is literal substring, not regex — must still match
+      verdict: denied
+      message_contains: "Shell expansion"
+
+  - id: "adv-inject-003"
+    description: "Prototype pollution-style key in arguments must not affect evaluation"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: block-admin
+          type: pre
+          tool: "API"
+          when:
+            args.role:
+              equals: "admin"
+          then:
+            effect: deny
+            message: "Admin access blocked"
+
+    envelope:
+      tool_name: "API"
+      arguments:
+        url: "/users"
+        role: "user"
+        __proto__:
+          role: "admin"
+        constructor:
+          prototype:
+            role: "admin"
+
+    expected:
+      # role is "user" — prototype pollution keys must be ignored
+      verdict: allowed

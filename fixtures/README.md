@@ -74,6 +74,7 @@ Each implementation should:
 5. **Assert** that the actual verdict matches `expected.verdict`.
 6. **Assert** that `expected.message_contains` (if present) is a substring of the verdict message.
 7. **Assert** that `expected.audit_action` (if present) matches the audit trail action.
+8. **Assert** that `expected.tags` (if present) are all present in the verdict tags.
 
 ### Python
 
