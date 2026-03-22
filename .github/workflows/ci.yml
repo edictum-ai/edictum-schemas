@@ -8,7 +8,7 @@ on:
 
 jobs:
   validate-schema:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
 
@@ -17,14 +17,14 @@ jobs:
           node-version: "22"
 
       - name: Validate JSON is parseable
-        run: node -e "JSON.parse(require('fs').readFileSync('schemas/edictum-v1.schema.json', 'utf8'))"
+        run: node --input-type=module -e "import { readFileSync } from 'fs'; JSON.parse(readFileSync('schemas/edictum-v1.schema.json', 'utf8'));"
 
       - name: Validate JSON Schema structure
         run: |
           npx ajv-cli@5 compile -s schemas/edictum-v1.schema.json --spec=draft2020
 
   test-python:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
 
