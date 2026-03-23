@@ -1,0 +1,189 @@
+name: Code Review
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, ready_for_review, reopened]
+
+concurrency:
+  group: review-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  review:
+    if: >-
+      github.event.pull_request.draft == false &&
+      github.actor != 'dependabot[bot]'
+    runs-on: blacksmith-2vcpu-ubuntu-2404-arm
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: read
+      issues: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract governance files from base branch
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+        run: |
+          mkdir -p /tmp/governance
+          git show "origin/${BASE_REF}:CLAUDE.md" > /tmp/governance/CLAUDE.md 2>/dev/null || true
+          git show "origin/${BASE_REF}:.github/review-instructions.md" > /tmp/governance/review-instructions.md 2>/dev/null || true
+          git show "origin/${BASE_REF}:.github/review-template.md" > /tmp/governance/review-template.md 2>/dev/null || true
+
+      - name: Generate app token
+        id: app-token
+        uses: actions/create-github-app-token@d72941d797fd3113feb6b93fd0dec494b13a2547 # v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Run code review
+        id: review
+        uses: anthropics/claude-code-action@9469d113c6afd29550c402740f22d1a97dd1209b # v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ steps.app-token.outputs.token }}
+          claude_args: '--model claude-sonnet-4-6 --max-turns 30 --allowedTools "Bash(git diff:*),Bash(git log:*),Bash(cat:*),Read,Glob,Grep,Write"'
+          prompt: |
+            You are a schema reviewer for Edictum — a **security product** (runtime contract enforcement for AI agent tool calls). This repo defines the JSON Schema that all three SDK implementations (Python, TypeScript, Go) consume. Schema errors cascade to every SDK.
+
+            PR: #${{ github.event.pull_request.number }}
+            SHA: ${{ github.event.pull_request.head.sha }}
+
+            ## Instructions
+
+            1. Read governance files from `/tmp/governance/`.
+            2. Get the FULL diff against main.
+            3. For schema changes, check:
+               - Backward compatibility (new fields must be optional)
+               - Correct JSON Schema draft-2020-12 syntax
+               - All required fields documented
+               - Test fixtures cover the new schema features
+            4. For fixture changes, check:
+               - Valid YAML matching the schema
+               - Edge cases covered (empty values, type boundaries, special characters)
+               - Naming consistency with existing fixtures
+
+            5. **Severity classification**:
+               - **Critical** (STATUS: fail): Breaking schema changes, invalid JSON Schema syntax
+               - **Warning** (STATUS: warn): Missing fixtures, undocumented fields
+               - **Suggestion**: Naming, organization improvements
+
+            6. Fill in the template. Write to `/tmp/review.md`.
+            7. Write inline comments to `/tmp/review-payload.json` if findings exist.
+
+            ## Rules
+            - One exhaustive pass. Find ALL issues.
+            - A clean PR is a good outcome.
+            - Do NOT post comments directly — write to /tmp/review.md and /tmp/review-payload.json only.
+
+      - name: Validate review output
+        id: validate
+        run: |
+          if [ ! -f /tmp/review.md ]; then
+            echo "::warning::Review file not found — Claude may have exhausted turns"
+            echo "valid=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if ! head -1 /tmp/review.md | grep -q '<!-- edictum-review -->'; then
+            echo "::warning::Review file missing edictum-review marker — corrupt output"
+            echo "valid=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "valid=true" >> "$GITHUB_OUTPUT"
+
+      - name: Upload review artifacts
+        if: steps.validate.outputs.valid == 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: review-comment
+          path: |
+            /tmp/review.md
+            /tmp/review-payload.json
+          retention-days: 1
+          if-no-files-found: ignore
+
+      # CI gate: fail on critical OR warning findings.
+      # Runs in the review job so the gate fires even if post is skipped.
+      - name: Fail on findings
+        if: steps.validate.outputs.valid == 'true'
+        run: |
+          if grep -q '<!-- STATUS: fail -->' /tmp/review.md; then
+            echo "::error::Code review found critical issues. See PR comment for details."
+            exit 1
+          fi
+          if grep -q '<!-- STATUS: warn -->' /tmp/review.md; then
+            echo "::error::Code review found warnings that must be addressed. See PR comment for details."
+            exit 1
+          fi
+          echo "Code review passed."
+
+  post:
+    needs: review
+    if: needs.review.result == 'success'
+    runs-on: blacksmith-2vcpu-ubuntu-2404-arm
+    timeout-minutes: 5
+    permissions:
+      pull-requests: write
+      issues: read
+
+    concurrency:
+      group: review-post-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+
+    steps:
+      - name: Generate app token
+        id: app-token
+        uses: actions/create-github-app-token@d72941d797fd3113feb6b93fd0dec494b13a2547 # v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Download review artifacts
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: review-comment
+          path: /tmp
+
+      - name: Post or update sticky comment
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          EXISTING_ID=$(gh api "repos/${{ github.repository }}/issues/${PR_NUMBER}/comments" \
+            --jq '[.[] | select(.body | contains("<!-- edictum-review -->"))] | last | .id // empty')
+          if [ -n "$EXISTING_ID" ]; then
+            gh api "repos/${{ github.repository }}/issues/comments/${EXISTING_ID}" \
+              -X PATCH -F body=@/tmp/review.md
+            echo "Updated existing review comment ${EXISTING_ID}"
+          else
+            gh api "repos/${{ github.repository }}/issues/${PR_NUMBER}/comments" \
+              -F body=@/tmp/review.md
+            echo "Created new review comment"
+          fi
+
+      # SECURITY: Validate the event field before posting. A malicious diff
+      # could trick Claude into writing "event": "APPROVE" instead of "COMMENT",
+      # which would auto-approve the PR via the app token.
+      - name: Post inline comments
+        run: |
+          if [ -f /tmp/review-payload.json ]; then
+            EVENT=$(jq -r '.event // empty' /tmp/review-payload.json)
+            if [ "$EVENT" != "COMMENT" ]; then
+              echo "::error::review-payload.json event field is '${EVENT}', expected 'COMMENT' — rejecting (possible prompt injection)"
+              exit 1
+            fi
+            gh api "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews" \
+              --input /tmp/review-payload.json \
+              && echo "Posted inline review comments" \
+              || echo "::warning::Inline comments failed (line not in diff?). Summary comment still posted."
+          fi
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+

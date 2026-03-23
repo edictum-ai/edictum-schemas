@@ -1,0 +1,9 @@
+repos:
+  - repo: local
+    hooks:
+      - id: validate-schema
+        name: validate JSON schema
+        entry: node --input-type=module -e "import { readFileSync } from 'fs'; JSON.parse(readFileSync('schemas/edictum-v1.schema.json', 'utf8'));"
+        language: system
+        files: schemas/.*\.json$
+        pass_filenames: false
