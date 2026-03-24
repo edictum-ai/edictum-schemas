@@ -1,0 +1,429 @@
+suite: contract-structure
+version: 1
+description: "Contracts with structural errors — missing or invalid fields within individual contracts"
+
+fixtures:
+  - id: "rej-010"
+    description: "Contract missing id field"
+    bundle:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - type: pre
+          tool: "*"
+          when:
+            args.x: { equals: 1 }
+          then:
+            effect: deny
+            message: "denied"
+    expected:
+      rejected: true
+      error_contains: "id"
+
+  - id: "rej-011"
+    description: "Contract id is empty string"
+    bundle:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: ""
+          type: pre
+          tool: "*"
+          when:
+            args.x: { equals: 1 }
+          then:
+            effect: deny
+            message: "denied"
+    expected:
+      rejected: true
+      error_contains: "id"
+
+  - id: "rej-012"
+    description: "Contract id with uppercase characters"
+    bundle:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: "UPPER-CASE"
+          type: pre
+          tool: "*"
+          when:
+            args.x: { equals: 1 }
+          then:
+            effect: deny
+            message: "denied"
+    expected:
+      rejected: true
+      error_contains: "id"
+
+  - id: "rej-013"
+    description: "Contract id with dots — only lowercase, digits, hyphens, underscores allowed"
+    bundle:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: "has.dot"
+          type: pre
+          tool: "*"
+          when:
+            args.x: { equals: 1 }
+          then:
+            effect: deny
+            message: "denied"
+    expected:
+      rejected: true
+      error_contains: "id"
+
+  - id: "rej-014"
+    description: "Contract missing type field"
+    bundle:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: c1
+          tool: "*"
+          when:
+            args.x: { equals: 1 }
+          then:
+            effect: deny
+            message: "denied"
+    expected:
+      rejected: true
+      error_contains: "type"
+
+  - id: "rej-015"
+    description: "Contract with invalid type value"
+    bundle:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: c1
+          type: rule
+          tool: "*"
+          when:
+            args.x: { equals: 1 }
+          then:
+            effect: deny
+            message: "denied"
+    expected:
+      rejected: true
+      error_contains: "type"
+
+  - id: "rej-016"
+    description: "Pre contract missing tool field"
+    bundle:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: c1
+          type: pre
+          when:
+            args.x: { equals: 1 }
+          then:
+            effect: deny
+            message: "denied"
+    expected:
+      rejected: true
+      error_contains: "tool"
+
+  - id: "rej-017"
+    description: "Pre contract missing when field"
+    bundle:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: c1
+          type: pre
+          tool: "*"
+          then:
+            effect: deny
+            message: "denied"
+    expected:
+      rejected: true
+      error_contains: "when"
+
+  - id: "rej-018"
+    description: "Pre contract missing then field"
+    bundle:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: c1
+          type: pre
+          tool: "*"
+          when:
+            args.x: { equals: 1 }
+    expected:
+      rejected: true
+      error_contains: "then"
+
+  - id: "rej-019"
+    description: "Pre contract then block missing effect"
+    bundle:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: c1
+          type: pre
+          tool: "*"
+          when:
+            args.x: { equals: 1 }
+          then:
+            message: "denied"
+    expected:
+      rejected: true
+      error_contains: "effect"
+
+  - id: "rej-020"
+    description: "Pre contract then block missing message"
+    bundle:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: c1
+          type: pre
+          tool: "*"
+          when:
+            args.x: { equals: 1 }
+          then:
+            effect: deny
+    expected:
+      rejected: true
+      error_contains: "message"
+
+  - id: "rej-021"
+    description: "Post contract missing tool field"
+    bundle:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: c1
+          type: post
+          when:
+            result.status: { equals: "error" }
+          then:
+            effect: warn
+            message: "error detected"
+    expected:
+      rejected: true
+      error_contains: "tool"
+
+  - id: "rej-022"
+    description: "Post contract missing when field"
+    bundle:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: c1
+          type: post
+          tool: "*"
+          then:
+            effect: warn
+            message: "warning"
+    expected:
+      rejected: true
+      error_contains: "when"
+
+  - id: "rej-023"
+    description: "Post contract missing then field"
+    bundle:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: c1
+          type: post
+          tool: "*"
+          when:
+            result.status: { equals: "error" }
+    expected:
+      rejected: true
+      error_contains: "then"
+
+  - id: "rej-024"
+    description: "Session contract missing limits field"
+    bundle:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: c1
+          type: session
+          then:
+            effect: deny
+            message: "limit exceeded"
+    expected:
+      rejected: true
+      error_contains: "limits"
+
+  - id: "rej-025"
+    description: "Session contract with empty limits object"
+    bundle:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: c1
+          type: session
+          limits: {}
+          then:
+            effect: deny
+            message: "limit exceeded"
+    expected:
+      rejected: true
+      error_contains: "limits"
+
+  - id: "rej-026"
+    description: "Session contract missing then field"
+    bundle:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: c1
+          type: session
+          limits:
+            max_tool_calls: 10
+    expected:
+      rejected: true
+      error_contains: "then"
+
+  - id: "rej-027"
+    description: "Session contract then block missing message"
+    bundle:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: c1
+          type: session
+          limits:
+            max_tool_calls: 10
+          then:
+            effect: deny
+    expected:
+      rejected: true
+      error_contains: "message"
+
+  - id: "rej-028"
+    description: "Sandbox contract missing both tool and tools fields"
+    bundle:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: c1
+          type: sandbox
+          within:
+            - "/safe"
+          message: "denied"
+    expected:
+      rejected: true
+      error_contains: "tool"
+
+  - id: "rej-029"
+    description: "Sandbox contract missing both within and allows fields"
+    bundle:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: c1
+          type: sandbox
+          tool: "Bash"
+          message: "denied"
+    expected:
+      rejected: true
+      error_contains: "within"
+
+  - id: "rej-030"
+    description: "Sandbox contract missing message field"
+    bundle:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: c1
+          type: sandbox
+          tool: "Bash"
+          within:
+            - "/safe"
+    expected:
+      rejected: true
+      error_contains: "message"

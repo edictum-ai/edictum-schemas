@@ -1,0 +1,166 @@
+suite: required-fields
+version: 1
+description: "Malformed bundles missing or corrupting required top-level fields"
+
+fixtures:
+  - id: "rej-001"
+    description: "Missing metadata key entirely"
+    bundle:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: c1
+          type: pre
+          tool: "*"
+          when:
+            args.x: { equals: 1 }
+          then:
+            effect: deny
+            message: "denied"
+    expected:
+      rejected: true
+      error_contains: "metadata"
+
+  - id: "rej-002"
+    description: "Metadata as string instead of object"
+    bundle:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata: "not-an-object"
+      defaults:
+        mode: enforce
+      contracts:
+        - id: c1
+          type: pre
+          tool: "*"
+          when:
+            args.x: { equals: 1 }
+          then:
+            effect: deny
+            message: "denied"
+    expected:
+      rejected: true
+      error_contains: "metadata"
+
+  - id: "rej-003"
+    description: "Missing defaults key entirely"
+    bundle:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      contracts:
+        - id: c1
+          type: pre
+          tool: "*"
+          when:
+            args.x: { equals: 1 }
+          then:
+            effect: deny
+            message: "denied"
+    expected:
+      rejected: true
+      error_contains: "defaults"
+
+  - id: "rej-004"
+    description: "Defaults object without required mode field"
+    bundle:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults: {}
+      contracts:
+        - id: c1
+          type: pre
+          tool: "*"
+          when:
+            args.x: { equals: 1 }
+          then:
+            effect: deny
+            message: "denied"
+    expected:
+      rejected: true
+      error_contains: "mode"
+
+  - id: "rej-005"
+    description: "Invalid defaults.mode value"
+    bundle:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: permissive
+      contracts:
+        - id: c1
+          type: pre
+          tool: "*"
+          when:
+            args.x: { equals: 1 }
+          then:
+            effect: deny
+            message: "denied"
+    expected:
+      rejected: true
+      error_contains: "mode"
+
+  - id: "rej-006"
+    description: "Empty contracts array"
+    bundle:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts: []
+    expected:
+      rejected: true
+      error_contains: "contracts"
+
+  - id: "rej-007"
+    description: "Missing metadata.name field"
+    bundle:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        description: "has description but no name"
+      defaults:
+        mode: enforce
+      contracts:
+        - id: c1
+          type: pre
+          tool: "*"
+          when:
+            args.x: { equals: 1 }
+          then:
+            effect: deny
+            message: "denied"
+    expected:
+      rejected: true
+      error_contains: "name"
+
+  - id: "rej-008"
+    description: "Invalid metadata.name pattern — uppercase not allowed"
+    bundle:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: "INVALID-NAME"
+      defaults:
+        mode: enforce
+      contracts:
+        - id: c1
+          type: pre
+          tool: "*"
+          when:
+            args.x: { equals: 1 }
+          then:
+            effect: deny
+            message: "denied"
+    expected:
+      rejected: true
+      error_contains: "name"

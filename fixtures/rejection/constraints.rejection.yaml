@@ -1,0 +1,74 @@
+suite: constraints
+version: 1
+description: "Bundles violating value constraints — length limits, unknown fields, invalid enums"
+
+fixtures:
+  - id: "rej-060"
+    description: "Message exceeds 500-character maximum length"
+    bundle:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: c1
+          type: pre
+          tool: "*"
+          when:
+            args.x: { equals: 1 }
+          then:
+            effect: deny
+            message: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaX"
+    expected:
+      rejected: true
+      error_contains: "message"
+
+  - id: "rej-061"
+    description: "Unknown top-level field — additionalProperties is false"
+    bundle:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: c1
+          type: pre
+          tool: "*"
+          when:
+            args.x: { equals: 1 }
+          then:
+            effect: deny
+            message: "denied"
+      unknown_field: true
+    expected:
+      rejected: true
+      error_contains: "unknown_field"
+
+  - id: "rej-062"
+    description: "Invalid tool side_effect enum value"
+    bundle:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: c1
+          type: pre
+          tool: "*"
+          when:
+            args.x: { equals: 1 }
+          then:
+            effect: deny
+            message: "denied"
+      tools:
+        Bash:
+          side_effect: dangerous
+    expected:
+      rejected: true
+      error_contains: "side_effect"
