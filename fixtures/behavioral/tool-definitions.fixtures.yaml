@@ -1,0 +1,80 @@
+suite: tool-definitions
+version: 1
+description: "Bundle-level tool definitions with side_effect and idempotent flags"
+
+fixtures:
+  - id: "tooldef-001"
+    description: "Tool marked as irreversible with postcondition warn"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      tools:
+        Bash:
+          side_effect: irreversible
+        Read:
+          side_effect: read
+          idempotent: true
+      contracts:
+        - id: warn-irreversible
+          type: post
+          tool: "Bash"
+          when:
+            result.output:
+              contains: "deleted"
+          then:
+            effect: warn
+            message: "Irreversible tool produced deletion output"
+
+    envelope:
+      tool_name: "Bash"
+      arguments:
+        command: "rm -f /tmp/file.txt"
+
+    result:
+      output: "deleted /tmp/file.txt"
+
+    expected:
+      verdict: warned
+      message_contains: "Irreversible"
+
+  - id: "tooldef-002"
+    description: "Pure tool definition allows unrestricted postcondition"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      tools:
+        Calculator:
+          side_effect: pure
+          idempotent: true
+      contracts:
+        - id: check-calc
+          type: post
+          tool: "Calculator"
+          when:
+            result.value:
+              gt: 1000000
+          then:
+            effect: warn
+            message: "Large calculation result"
+
+    envelope:
+      tool_name: "Calculator"
+      arguments:
+        expression: "2**30"
+
+    result:
+      value: 1073741824
+
+    expected:
+      verdict: warned
+      message_contains: "Large"

@@ -1,0 +1,85 @@
+suite: sandbox-escape
+version: 1
+description: "Adversarial attempts to escape sandbox path restrictions"
+
+fixtures:
+  - id: "adv-sandbox-001"
+    description: "Double-encoded path traversal must not bypass sandbox"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: sandbox-project
+          type: sandbox
+          tool: "Write"
+          within:
+            - "/home/user/project"
+          message: "Write restricted to project directory"
+
+    envelope:
+      tool_name: "Write"
+      arguments:
+        file_path: "/home/user/project/%2e%2e/%2e%2e/etc/passwd"
+
+    expected:
+      verdict: denied
+      message_contains: "project directory"
+
+  - id: "adv-sandbox-002"
+    description: "Null byte injection in path must not bypass sandbox"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: sandbox-project
+          type: sandbox
+          tool: "Write"
+          within:
+            - "/home/user/project"
+          message: "Write restricted to project directory"
+
+    envelope:
+      tool_name: "Write"
+      arguments:
+        file_path: "/home/user/project/safe.txt\u0000../../etc/passwd"
+
+    expected:
+      verdict: denied
+      message_contains: "project directory"
+
+  - id: "adv-sandbox-003"
+    description: "Symlink-style path notation must not bypass sandbox"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: sandbox-project
+          type: sandbox
+          tool: "Read"
+          within:
+            - "/home/user/project"
+          message: "Read restricted to project directory"
+
+    envelope:
+      tool_name: "Read"
+      arguments:
+        file_path: "/home/user/project/./../../../../etc/shadow"
+
+    expected:
+      verdict: denied
+      message_contains: "project directory"

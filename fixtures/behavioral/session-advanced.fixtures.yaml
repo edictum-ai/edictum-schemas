@@ -1,0 +1,166 @@
+suite: session-advanced
+version: 1
+description: "Advanced session contract scenarios: max_attempts, combined limits, per-tool edge cases"
+
+fixtures:
+  - id: "session-adv-001"
+    description: "max_attempts exceeded denies the call"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: limit-retries
+          type: session
+          limits:
+            max_attempts: 3
+          then:
+            effect: deny
+            message: "Maximum retry attempts exceeded"
+
+    session:
+      attempts: 4
+
+    envelope:
+      tool_name: "API"
+      arguments:
+        url: "/flaky-endpoint"
+
+    expected:
+      verdict: denied
+      message_contains: "retry"
+
+  - id: "session-adv-002"
+    description: "max_attempts within limit is allowed"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: limit-retries
+          type: session
+          limits:
+            max_attempts: 3
+          then:
+            effect: deny
+            message: "Maximum retry attempts exceeded"
+
+    session:
+      attempts: 2
+
+    envelope:
+      tool_name: "API"
+      arguments:
+        url: "/flaky-endpoint"
+
+    expected:
+      verdict: allowed
+
+  - id: "session-adv-003"
+    description: "Combined max_tool_calls and max_calls_per_tool — per-tool hits first"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: combined-limits
+          type: session
+          limits:
+            max_tool_calls: 100
+            max_calls_per_tool:
+              Bash: 5
+          then:
+            effect: deny
+            message: "Call limit exceeded"
+
+    session:
+      tool_calls: 10
+      per_tool:
+        Bash: 6
+
+    envelope:
+      tool_name: "Bash"
+      arguments:
+        command: "echo over-limit"
+
+    expected:
+      verdict: denied
+      message_contains: "limit"
+
+  - id: "session-adv-004"
+    description: "Per-tool limit for one tool does not affect another tool"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: limit-bash
+          type: session
+          limits:
+            max_calls_per_tool:
+              Bash: 5
+          then:
+            effect: deny
+            message: "Bash call limit exceeded"
+
+    session:
+      tool_calls: 20
+      per_tool:
+        Bash: 6
+        Read: 14
+
+    envelope:
+      tool_name: "Read"
+      arguments:
+        file_path: "/tmp/data.txt"
+
+    expected:
+      verdict: allowed
+
+  - id: "session-adv-005"
+    description: "Session contract in observe mode does not block"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: limit-observe
+          type: session
+          mode: observe
+          limits:
+            max_tool_calls: 5
+          then:
+            effect: deny
+            message: "Session limit exceeded"
+
+    session:
+      tool_calls: 10
+
+    envelope:
+      tool_name: "Bash"
+      arguments:
+        command: "echo over-limit"
+
+    expected:
+      verdict: allowed
+      audit_action: observed

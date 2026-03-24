@@ -1,0 +1,128 @@
+suite: precondition-deny
+version: 1
+description: "Precondition contracts that deny tool calls"
+
+fixtures:
+  - id: "pre-deny-001"
+    description: "Exact tool name match with contains condition triggers deny"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: block-rm
+          type: pre
+          tool: "Bash"
+          when:
+            args.command:
+              contains: "rm -rf"
+          then:
+            effect: deny
+            message: "Cannot run rm -rf"
+
+    envelope:
+      tool_name: "Bash"
+      arguments:
+        command: "rm -rf /important"
+
+    expected:
+      verdict: denied
+      message_contains: "rm -rf"
+
+  - id: "pre-deny-002"
+    description: "Wildcard tool selector matches any tool"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: block-all-secrets
+          type: pre
+          tool: "*"
+          when:
+            args.content:
+              matches: "(?i)password\\s*[:=]"
+          then:
+            effect: deny
+            message: "Cannot include password literals"
+
+    envelope:
+      tool_name: "Write"
+      arguments:
+        content: "password: hunter2"
+
+    expected:
+      verdict: denied
+      message_contains: "password"
+
+  - id: "pre-deny-003"
+    description: "Glob tool selector with compound when condition"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: block-mcp-write
+          type: pre
+          tool: "mcp_*"
+          when:
+            all:
+              - args.method:
+                  equals: "write"
+              - args.path:
+                  starts_with: "/etc"
+          then:
+            effect: deny
+            message: "MCP tools cannot write to /etc"
+
+    envelope:
+      tool_name: "mcp_filesystem"
+      arguments:
+        method: "write"
+        path: "/etc/passwd"
+
+    expected:
+      verdict: denied
+      message_contains: "/etc"
+
+  - id: "pre-deny-004"
+    description: "Disabled contract does not trigger deny"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: block-rm-disabled
+          type: pre
+          enabled: false
+          tool: "Bash"
+          when:
+            args.command:
+              contains: "rm -rf"
+          then:
+            effect: deny
+            message: "Cannot run rm -rf"
+
+    envelope:
+      tool_name: "Bash"
+      arguments:
+        command: "rm -rf /important"
+
+    expected:
+      verdict: allowed

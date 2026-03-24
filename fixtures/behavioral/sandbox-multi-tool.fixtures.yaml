@@ -1,0 +1,93 @@
+suite: sandbox-multi-tool
+version: 1
+description: "Sandbox contracts using the tools (plural) selector"
+
+fixtures:
+  - id: "sandbox-multi-001"
+    description: "Sandbox with tools array applies to all listed tools"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: sandbox-file-ops
+          type: sandbox
+          tools:
+            - "Read"
+            - "Write"
+            - "Edit"
+          within:
+            - "/home/user/project"
+          message: "File operations restricted to project directory"
+
+    envelope:
+      tool_name: "Edit"
+      arguments:
+        file_path: "/etc/nginx/nginx.conf"
+        old_string: "listen 80"
+        new_string: "listen 8080"
+
+    expected:
+      verdict: denied
+      message_contains: "project directory"
+
+  - id: "sandbox-multi-002"
+    description: "Sandbox with tools array allows unlisted tool"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: sandbox-file-ops
+          type: sandbox
+          tools:
+            - "Read"
+            - "Write"
+            - "Edit"
+          within:
+            - "/home/user/project"
+          message: "File operations restricted to project directory"
+
+    envelope:
+      tool_name: "Bash"
+      arguments:
+        command: "cat /etc/passwd"
+
+    expected:
+      verdict: allowed
+
+  - id: "sandbox-multi-003"
+    description: "Sandbox with outside:approve allows out-of-bounds access"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: sandbox-lenient
+          type: sandbox
+          tool: "Read"
+          within:
+            - "/home/user/project"
+          outside: approve
+          message: "Read outside project requires approval"
+
+    envelope:
+      tool_name: "Read"
+      arguments:
+        file_path: "/var/log/app.log"
+
+    expected:
+      # outside:approve means out-of-bounds triggers approval flow, not immediate deny
+      verdict: allowed

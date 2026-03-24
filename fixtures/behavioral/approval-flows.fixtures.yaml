@@ -1,0 +1,172 @@
+suite: approval-flows
+version: 1
+description: "Human-in-the-loop approval flows for pre and sandbox contracts"
+
+fixtures:
+  - id: "approval-001"
+    description: "Pre contract with approve effect triggers approval request"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: approve-deploy
+          type: pre
+          tool: "Deploy"
+          when:
+            args.target:
+              equals: "production"
+          then:
+            effect: approve
+            message: "Production deploy requires approval"
+            timeout: 60
+            timeout_effect: deny
+
+    envelope:
+      tool_name: "Deploy"
+      arguments:
+        target: "production"
+        version: "2.1.0"
+
+    # No approval decision yet
+    approval_pending: true
+
+    expected:
+      verdict: denied
+      message_contains: "approval"
+
+  - id: "approval-002"
+    description: "Approved request proceeds"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: approve-deploy
+          type: pre
+          tool: "Deploy"
+          when:
+            args.target:
+              equals: "production"
+          then:
+            effect: approve
+            message: "Production deploy requires approval"
+            timeout: 60
+            timeout_effect: deny
+
+    envelope:
+      tool_name: "Deploy"
+      arguments:
+        target: "production"
+        version: "2.1.0"
+
+    approval_decision: approved
+
+    expected:
+      verdict: allowed
+
+  - id: "approval-003"
+    description: "Rejected approval denies the call"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: approve-deploy
+          type: pre
+          tool: "Deploy"
+          when:
+            args.target:
+              equals: "production"
+          then:
+            effect: approve
+            message: "Production deploy requires approval"
+            timeout: 60
+            timeout_effect: deny
+
+    envelope:
+      tool_name: "Deploy"
+      arguments:
+        target: "production"
+        version: "2.1.0"
+
+    approval_decision: rejected
+
+    expected:
+      verdict: denied
+
+  - id: "approval-004"
+    description: "Sandbox with outside:approve triggers approval for out-of-bounds path"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: sandbox-approve
+          type: sandbox
+          tool: "Write"
+          within:
+            - "/home/user/project"
+          outside: approve
+          message: "Write outside project needs approval"
+          timeout: 30
+          timeout_effect: deny
+
+    envelope:
+      tool_name: "Write"
+      arguments:
+        file_path: "/etc/config.yaml"
+        content: "setting: value"
+
+    approval_pending: true
+
+    expected:
+      verdict: denied
+      message_contains: "approval"
+
+  - id: "approval-005"
+    description: "Sandbox timeout with allow effect auto-approves"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: sandbox-auto-approve
+          type: sandbox
+          tool: "Read"
+          within:
+            - "/home/user/project"
+          outside: approve
+          message: "Read outside project"
+          timeout: 10
+          timeout_effect: allow
+
+    envelope:
+      tool_name: "Read"
+      arguments:
+        file_path: "/var/log/app.log"
+
+    timeout_expired: true
+
+    expected:
+      verdict: allowed

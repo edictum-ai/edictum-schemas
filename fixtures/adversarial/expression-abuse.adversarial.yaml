@@ -1,0 +1,141 @@
+suite: expression-abuse
+version: 1
+description: "Adversarial inputs targeting expression evaluation"
+
+fixtures:
+  - id: "adv-expr-001"
+    description: "ReDoS-resistant regex pattern must not hang evaluator"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: check-regex
+          type: pre
+          tool: "Write"
+          when:
+            args.content:
+              matches: "^(a+)+$"
+          then:
+            effect: deny
+            message: "Pattern matched"
+
+    envelope:
+      tool_name: "Write"
+      arguments:
+        file_path: "/tmp/test.txt"
+        # Classic ReDoS input — long string of 'a' followed by non-matching char
+        content: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa!"
+
+    expected:
+      # Must complete without hanging. Exact verdict depends on regex timeout behavior.
+      # Implementations MUST either: deny (if regex matches before timeout),
+      # allow (if regex times out and defaults to no-match), or error (if regex aborted).
+      # Must NOT hang indefinitely.
+      verdict: allowed
+
+  - id: "adv-expr-002"
+    description: "Extremely long input string must not crash evaluator"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: check-long
+          type: pre
+          tool: "Write"
+          when:
+            args.content:
+              contains: "needle"
+          then:
+            effect: deny
+            message: "Found needle"
+
+    envelope:
+      tool_name: "Write"
+      arguments:
+        file_path: "/tmp/huge.txt"
+        # Schema caps matches input at 10,000 chars — evaluator must handle gracefully
+        content: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+
+    expected:
+      # No needle present — should be allowed without crash
+      verdict: allowed
+
+  - id: "adv-expr-003"
+    description: "Null/empty values in operator comparisons must not crash"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: check-empty
+          type: pre
+          tool: "Write"
+          when:
+            args.content:
+              equals: ""
+          then:
+            effect: deny
+            message: "Empty content not allowed"
+
+    envelope:
+      tool_name: "Write"
+      arguments:
+        file_path: "/tmp/empty.txt"
+        content: ""
+
+    expected:
+      verdict: denied
+      message_contains: "Empty"
+
+  - id: "adv-expr-004"
+    description: "Deeply nested expression tree must not stack overflow"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: deep-nest
+          type: pre
+          tool: "Bash"
+          when:
+            not:
+              not:
+                not:
+                  not:
+                    not:
+                      not:
+                        not:
+                          not:
+                            args.command:
+                              contains: "rm"
+          then:
+            effect: deny
+            message: "Deeply nested expression matched"
+
+    envelope:
+      tool_name: "Bash"
+      arguments:
+        command: "rm file.txt"
+
+    expected:
+      # 8 levels of not → even number of negations → same as no negation
+      verdict: denied
+      message_contains: "nested"

@@ -1,0 +1,114 @@
+suite: sandbox-path
+version: 1
+description: "Sandbox contracts enforcing path boundaries"
+
+fixtures:
+  - id: "sandbox-path-001"
+    description: "Path within allowed directory is allowed"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: sandbox-project
+          type: sandbox
+          tool: "Write"
+          within:
+            - "/home/user/project"
+          message: "Write restricted to project directory"
+
+    envelope:
+      tool_name: "Write"
+      arguments:
+        file_path: "/home/user/project/src/main.py"
+
+    expected:
+      verdict: allowed
+
+  - id: "sandbox-path-002"
+    description: "Path outside allowed directory is denied"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: sandbox-project
+          type: sandbox
+          tool: "Write"
+          within:
+            - "/home/user/project"
+          message: "Write restricted to project directory"
+
+    envelope:
+      tool_name: "Write"
+      arguments:
+        file_path: "/etc/passwd"
+
+    expected:
+      verdict: denied
+      message_contains: "project directory"
+
+  - id: "sandbox-path-003"
+    description: "Path with parent traversal escaping sandbox is denied"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: sandbox-project
+          type: sandbox
+          tool: "Write"
+          within:
+            - "/home/user/project"
+          message: "Write restricted to project directory"
+
+    envelope:
+      tool_name: "Write"
+      arguments:
+        file_path: "/home/user/project/../../etc/passwd"
+
+    expected:
+      verdict: denied
+      message_contains: "project directory"
+
+  - id: "sandbox-path-004"
+    description: "not_within excludes specific subdirectory"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: sandbox-no-secrets
+          type: sandbox
+          tool: "Read"
+          within:
+            - "/home/user/project"
+          not_within:
+            - "/home/user/project/.env"
+            - "/home/user/project/secrets"
+          message: "Cannot access secrets directory"
+
+    envelope:
+      tool_name: "Read"
+      arguments:
+        file_path: "/home/user/project/secrets/api-keys.json"
+
+    expected:
+      verdict: denied
+      message_contains: "secrets"

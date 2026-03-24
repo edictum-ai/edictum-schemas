@@ -1,0 +1,1023 @@
+suite: operators
+version: 1
+description: "All 15 expression operators with expected evaluation behavior"
+
+fixtures:
+  # ── exists ──────────────────────────────────────────────────────────
+  - id: "op-exists-true-001"
+    description: "exists:true matches when field is present"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: check-exists
+          type: pre
+          tool: "Bash"
+          when:
+            args.sudo:
+              exists: true
+          then:
+            effect: deny
+            message: "Sudo argument must not be present"
+
+    envelope:
+      tool_name: "Bash"
+      arguments:
+        command: "apt install nginx"
+        sudo: true
+
+    expected:
+      verdict: denied
+      message_contains: "Sudo"
+
+  - id: "op-exists-true-002"
+    description: "exists:true does not match when field is absent"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: check-exists
+          type: pre
+          tool: "Bash"
+          when:
+            args.sudo:
+              exists: true
+          then:
+            effect: deny
+            message: "Sudo argument must not be present"
+
+    envelope:
+      tool_name: "Bash"
+      arguments:
+        command: "ls -la"
+
+    expected:
+      verdict: allowed
+
+  - id: "op-exists-false-001"
+    description: "exists:false matches when field is absent"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: require-reason
+          type: pre
+          tool: "Delete"
+          when:
+            args.reason:
+              exists: false
+          then:
+            effect: deny
+            message: "Deletion requires a reason field"
+
+    envelope:
+      tool_name: "Delete"
+      arguments:
+        target: "/data/old-records"
+
+    expected:
+      verdict: denied
+      message_contains: "reason"
+
+  # ── equals ──────────────────────────────────────────────────────────
+  - id: "op-equals-string-001"
+    description: "equals matches identical string value"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: block-delete-action
+          type: pre
+          tool: "API"
+          when:
+            args.method:
+              equals: "DELETE"
+          then:
+            effect: deny
+            message: "DELETE method is blocked"
+
+    envelope:
+      tool_name: "API"
+      arguments:
+        method: "DELETE"
+        url: "/users/123"
+
+    expected:
+      verdict: denied
+      message_contains: "DELETE"
+
+  - id: "op-equals-string-002"
+    description: "equals does not match different string"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: block-delete-action
+          type: pre
+          tool: "API"
+          when:
+            args.method:
+              equals: "DELETE"
+          then:
+            effect: deny
+            message: "DELETE method is blocked"
+
+    envelope:
+      tool_name: "API"
+      arguments:
+        method: "GET"
+        url: "/users/123"
+
+    expected:
+      verdict: allowed
+
+  - id: "op-equals-number-001"
+    description: "equals matches identical numeric value"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: block-port-22
+          type: pre
+          tool: "Connect"
+          when:
+            args.port:
+              equals: 22
+          then:
+            effect: deny
+            message: "SSH port 22 is blocked"
+
+    envelope:
+      tool_name: "Connect"
+      arguments:
+        host: "server.internal"
+        port: 22
+
+    expected:
+      verdict: denied
+      message_contains: "port 22"
+
+  - id: "op-equals-bool-001"
+    description: "equals matches boolean value"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: block-force
+          type: pre
+          tool: "Bash"
+          when:
+            args.force:
+              equals: true
+          then:
+            effect: deny
+            message: "Force flag is not allowed"
+
+    envelope:
+      tool_name: "Bash"
+      arguments:
+        command: "git push"
+        force: true
+
+    expected:
+      verdict: denied
+      message_contains: "Force"
+
+  # ── not_equals ──────────────────────────────────────────────────────
+  - id: "op-not-equals-001"
+    description: "not_equals matches when value differs"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: require-json
+          type: pre
+          tool: "API"
+          when:
+            args.content_type:
+              not_equals: "application/json"
+          then:
+            effect: deny
+            message: "Only JSON content type is allowed"
+
+    envelope:
+      tool_name: "API"
+      arguments:
+        content_type: "text/xml"
+        body: "<data/>"
+
+    expected:
+      verdict: denied
+      message_contains: "JSON"
+
+  - id: "op-not-equals-002"
+    description: "not_equals does not match when value is identical"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: require-json
+          type: pre
+          tool: "API"
+          when:
+            args.content_type:
+              not_equals: "application/json"
+          then:
+            effect: deny
+            message: "Only JSON content type is allowed"
+
+    envelope:
+      tool_name: "API"
+      arguments:
+        content_type: "application/json"
+        body: "{}"
+
+    expected:
+      verdict: allowed
+
+  # ── in ──────────────────────────────────────────────────────────────
+  - id: "op-in-001"
+    description: "in matches when value is in the list"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: block-dangerous-cmds
+          type: pre
+          tool: "Bash"
+          when:
+            args.command:
+              in: ["shutdown", "reboot", "halt"]
+          then:
+            effect: deny
+            message: "System commands are blocked"
+
+    envelope:
+      tool_name: "Bash"
+      arguments:
+        command: "reboot"
+
+    expected:
+      verdict: denied
+      message_contains: "System commands"
+
+  - id: "op-in-002"
+    description: "in does not match when value is not in the list"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: block-dangerous-cmds
+          type: pre
+          tool: "Bash"
+          when:
+            args.command:
+              in: ["shutdown", "reboot", "halt"]
+          then:
+            effect: deny
+            message: "System commands are blocked"
+
+    envelope:
+      tool_name: "Bash"
+      arguments:
+        command: "ls"
+
+    expected:
+      verdict: allowed
+
+  # ── not_in ──────────────────────────────────────────────────────────
+  - id: "op-not-in-001"
+    description: "not_in matches when value is absent from list"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: allow-only-safe
+          type: pre
+          tool: "Bash"
+          when:
+            args.command:
+              not_in: ["ls", "cat", "echo", "pwd"]
+          then:
+            effect: deny
+            message: "Only safe commands are permitted"
+
+    envelope:
+      tool_name: "Bash"
+      arguments:
+        command: "rm"
+
+    expected:
+      verdict: denied
+      message_contains: "safe commands"
+
+  - id: "op-not-in-002"
+    description: "not_in does not match when value is in the list"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: allow-only-safe
+          type: pre
+          tool: "Bash"
+          when:
+            args.command:
+              not_in: ["ls", "cat", "echo", "pwd"]
+          then:
+            effect: deny
+            message: "Only safe commands are permitted"
+
+    envelope:
+      tool_name: "Bash"
+      arguments:
+        command: "cat"
+
+    expected:
+      verdict: allowed
+
+  # ── contains ────────────────────────────────────────────────────────
+  - id: "op-contains-001"
+    description: "contains matches substring"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: block-eval
+          type: pre
+          tool: "Bash"
+          when:
+            args.command:
+              contains: "eval("
+          then:
+            effect: deny
+            message: "eval() is not allowed"
+
+    envelope:
+      tool_name: "Bash"
+      arguments:
+        command: "python -c 'eval(input())'"
+
+    expected:
+      verdict: denied
+      message_contains: "eval()"
+
+  - id: "op-contains-002"
+    description: "contains does not match absent substring"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: block-eval
+          type: pre
+          tool: "Bash"
+          when:
+            args.command:
+              contains: "eval("
+          then:
+            effect: deny
+            message: "eval() is not allowed"
+
+    envelope:
+      tool_name: "Bash"
+      arguments:
+        command: "python -c 'print(1)'"
+
+    expected:
+      verdict: allowed
+
+  # ── contains_any ────────────────────────────────────────────────────
+  - id: "op-contains-any-001"
+    description: "contains_any matches when any substring is present"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: block-dangerous
+          type: pre
+          tool: "Bash"
+          when:
+            args.command:
+              contains_any:
+                - "rm -rf"
+                - "mkfs"
+                - "dd if="
+          then:
+            effect: deny
+            message: "Destructive command detected"
+
+    envelope:
+      tool_name: "Bash"
+      arguments:
+        command: "dd if=/dev/zero of=/dev/sda"
+
+    expected:
+      verdict: denied
+      message_contains: "Destructive"
+
+  - id: "op-contains-any-002"
+    description: "contains_any does not match when no substring is present"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: block-dangerous
+          type: pre
+          tool: "Bash"
+          when:
+            args.command:
+              contains_any:
+                - "rm -rf"
+                - "mkfs"
+                - "dd if="
+          then:
+            effect: deny
+            message: "Destructive command detected"
+
+    envelope:
+      tool_name: "Bash"
+      arguments:
+        command: "echo hello world"
+
+    expected:
+      verdict: allowed
+
+  # ── starts_with ─────────────────────────────────────────────────────
+  - id: "op-starts-with-001"
+    description: "starts_with matches prefix"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: block-sudo
+          type: pre
+          tool: "Bash"
+          when:
+            args.command:
+              starts_with: "sudo "
+          then:
+            effect: deny
+            message: "sudo is not allowed"
+
+    envelope:
+      tool_name: "Bash"
+      arguments:
+        command: "sudo apt install nginx"
+
+    expected:
+      verdict: denied
+      message_contains: "sudo"
+
+  - id: "op-starts-with-002"
+    description: "starts_with does not match non-prefix"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: block-sudo
+          type: pre
+          tool: "Bash"
+          when:
+            args.command:
+              starts_with: "sudo "
+          then:
+            effect: deny
+            message: "sudo is not allowed"
+
+    envelope:
+      tool_name: "Bash"
+      arguments:
+        command: "echo sudo is fun"
+
+    expected:
+      verdict: allowed
+
+  # ── ends_with ───────────────────────────────────────────────────────
+  - id: "op-ends-with-001"
+    description: "ends_with matches suffix"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: block-exe-upload
+          type: pre
+          tool: "Upload"
+          when:
+            args.filename:
+              ends_with: ".exe"
+          then:
+            effect: deny
+            message: "Cannot upload executable files"
+
+    envelope:
+      tool_name: "Upload"
+      arguments:
+        filename: "malware.exe"
+
+    expected:
+      verdict: denied
+      message_contains: "executable"
+
+  - id: "op-ends-with-002"
+    description: "ends_with does not match different suffix"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: block-exe-upload
+          type: pre
+          tool: "Upload"
+          when:
+            args.filename:
+              ends_with: ".exe"
+          then:
+            effect: deny
+            message: "Cannot upload executable files"
+
+    envelope:
+      tool_name: "Upload"
+      arguments:
+        filename: "document.pdf"
+
+    expected:
+      verdict: allowed
+
+  # ── matches ─────────────────────────────────────────────────────────
+  - id: "op-matches-001"
+    description: "matches with regex pattern"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: block-ip-literal
+          type: pre
+          tool: "Connect"
+          when:
+            args.host:
+              matches: "^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}$"
+          then:
+            effect: deny
+            message: "Direct IP connections are not allowed"
+
+    envelope:
+      tool_name: "Connect"
+      arguments:
+        host: "192.168.1.100"
+
+    expected:
+      verdict: denied
+      message_contains: "IP connections"
+
+  - id: "op-matches-002"
+    description: "matches does not match non-matching input"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: block-ip-literal
+          type: pre
+          tool: "Connect"
+          when:
+            args.host:
+              matches: "^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}$"
+          then:
+            effect: deny
+            message: "Direct IP connections are not allowed"
+
+    envelope:
+      tool_name: "Connect"
+      arguments:
+        host: "api.example.com"
+
+    expected:
+      verdict: allowed
+
+  # ── matches_any ─────────────────────────────────────────────────────
+  - id: "op-matches-any-001"
+    description: "matches_any matches when any regex pattern hits"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: block-secret-patterns
+          type: pre
+          tool: "Write"
+          when:
+            args.content:
+              matches_any:
+                - "-----BEGIN (RSA |EC )?PRIVATE KEY-----"
+                - "ghp_[A-Za-z0-9]{36}"
+                - "sk-[A-Za-z0-9]{48}"
+          then:
+            effect: deny
+            message: "Content contains secret material"
+
+    envelope:
+      tool_name: "Write"
+      arguments:
+        file_path: "/tmp/config.txt"
+        content: "token = ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghij"
+
+    expected:
+      verdict: denied
+      message_contains: "secret"
+
+  - id: "op-matches-any-002"
+    description: "matches_any does not match when no pattern hits"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: block-secret-patterns
+          type: pre
+          tool: "Write"
+          when:
+            args.content:
+              matches_any:
+                - "-----BEGIN (RSA |EC )?PRIVATE KEY-----"
+                - "ghp_[A-Za-z0-9]{36}"
+                - "sk-[A-Za-z0-9]{48}"
+          then:
+            effect: deny
+            message: "Content contains secret material"
+
+    envelope:
+      tool_name: "Write"
+      arguments:
+        file_path: "/tmp/readme.md"
+        content: "# Hello World\nThis is safe content."
+
+    expected:
+      verdict: allowed
+
+  # ── gt ──────────────────────────────────────────────────────────────
+  - id: "op-gt-001"
+    description: "gt matches when value exceeds threshold"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: limit-batch-size
+          type: pre
+          tool: "BatchDelete"
+          when:
+            args.count:
+              gt: 100
+          then:
+            effect: deny
+            message: "Batch size exceeds maximum of 100"
+
+    envelope:
+      tool_name: "BatchDelete"
+      arguments:
+        count: 500
+        table: "logs"
+
+    expected:
+      verdict: denied
+      message_contains: "100"
+
+  - id: "op-gt-002"
+    description: "gt does not match when value equals threshold"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: limit-batch-size
+          type: pre
+          tool: "BatchDelete"
+          when:
+            args.count:
+              gt: 100
+          then:
+            effect: deny
+            message: "Batch size exceeds maximum of 100"
+
+    envelope:
+      tool_name: "BatchDelete"
+      arguments:
+        count: 100
+        table: "logs"
+
+    expected:
+      verdict: allowed
+
+  # ── gte ─────────────────────────────────────────────────────────────
+  - id: "op-gte-001"
+    description: "gte matches when value equals threshold"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: block-high-priority
+          type: pre
+          tool: "Notify"
+          when:
+            args.priority:
+              gte: 5
+          then:
+            effect: deny
+            message: "High priority notifications require approval"
+
+    envelope:
+      tool_name: "Notify"
+      arguments:
+        priority: 5
+        channel: "alerts"
+
+    expected:
+      verdict: denied
+      message_contains: "priority"
+
+  - id: "op-gte-002"
+    description: "gte does not match when value is below threshold"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: block-high-priority
+          type: pre
+          tool: "Notify"
+          when:
+            args.priority:
+              gte: 5
+          then:
+            effect: deny
+            message: "High priority notifications require approval"
+
+    envelope:
+      tool_name: "Notify"
+      arguments:
+        priority: 3
+        channel: "alerts"
+
+    expected:
+      verdict: allowed
+
+  # ── lt ──────────────────────────────────────────────────────────────
+  - id: "op-lt-001"
+    description: "lt matches when value is below threshold"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: require-min-length
+          type: pre
+          tool: "Write"
+          when:
+            args.length:
+              lt: 8
+          then:
+            effect: deny
+            message: "Content must be at least 8 characters"
+
+    envelope:
+      tool_name: "Write"
+      arguments:
+        content: "short"
+        length: 5
+
+    expected:
+      verdict: denied
+      message_contains: "8 characters"
+
+  - id: "op-lt-002"
+    description: "lt does not match when value equals threshold"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: require-min-length
+          type: pre
+          tool: "Write"
+          when:
+            args.length:
+              lt: 8
+          then:
+            effect: deny
+            message: "Content must be at least 8 characters"
+
+    envelope:
+      tool_name: "Write"
+      arguments:
+        content: "adequate"
+        length: 8
+
+    expected:
+      verdict: allowed
+
+  # ── lte ─────────────────────────────────────────────────────────────
+  - id: "op-lte-001"
+    description: "lte matches when value equals threshold"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: block-low-confidence
+          type: pre
+          tool: "Classify"
+          when:
+            args.confidence:
+              lte: 0.5
+          then:
+            effect: deny
+            message: "Confidence too low for classification"
+
+    envelope:
+      tool_name: "Classify"
+      arguments:
+        input: "ambiguous data"
+        confidence: 0.5
+
+    expected:
+      verdict: denied
+      message_contains: "Confidence"
+
+  - id: "op-lte-002"
+    description: "lte does not match when value exceeds threshold"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: block-low-confidence
+          type: pre
+          tool: "Classify"
+          when:
+            args.confidence:
+              lte: 0.5
+          then:
+            effect: deny
+            message: "Confidence too low for classification"
+
+    envelope:
+      tool_name: "Classify"
+      arguments:
+        input: "clear data"
+        confidence: 0.95
+
+    expected:
+      verdict: allowed

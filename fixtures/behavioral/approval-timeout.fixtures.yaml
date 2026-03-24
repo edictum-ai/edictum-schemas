@@ -1,0 +1,73 @@
+suite: approval-timeout
+version: 1
+description: "Approval timeout behavior on precondition and sandbox contracts"
+
+fixtures:
+  - id: "timeout-001"
+    description: "Approval timeout with deny effect denies the call"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: approve-deploys
+          type: pre
+          tool: "Bash"
+          when:
+            args.command:
+              contains: "deploy"
+          then:
+            effect: approve
+            message: "Deploy requires human approval"
+            timeout: 30
+            timeout_effect: deny
+
+    envelope:
+      tool_name: "Bash"
+      arguments:
+        command: "deploy --prod"
+
+    # Simulate timeout scenario
+    timeout_expired: true
+
+    expected:
+      verdict: denied
+      message_contains: "approval"
+
+  - id: "timeout-002"
+    description: "Approval timeout with allow effect allows the call"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: approve-deploys
+          type: pre
+          tool: "Bash"
+          when:
+            args.command:
+              contains: "deploy"
+          then:
+            effect: approve
+            message: "Deploy requires human approval"
+            timeout: 30
+            timeout_effect: allow
+
+    envelope:
+      tool_name: "Bash"
+      arguments:
+        command: "deploy --staging"
+
+    # Simulate timeout scenario
+    timeout_expired: true
+
+    expected:
+      verdict: allowed

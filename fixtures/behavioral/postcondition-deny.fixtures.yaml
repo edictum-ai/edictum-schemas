@@ -1,0 +1,73 @@
+suite: postcondition-deny
+version: 1
+description: "Postcondition contracts with deny effect"
+
+fixtures:
+  - id: "post-deny-001"
+    description: "Postcondition deny blocks result from reaching the agent"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: deny-large-output
+          type: post
+          tool: "Bash"
+          when:
+            result.byte_count:
+              gt: 100000
+          then:
+            effect: deny
+            message: "Output too large to return"
+
+    envelope:
+      tool_name: "Bash"
+      arguments:
+        command: "cat /var/log/syslog"
+
+    result:
+      output: "(truncated)"
+      byte_count: 500000
+
+    expected:
+      verdict: denied
+      message_contains: "too large"
+
+  - id: "post-deny-002"
+    description: "Postcondition deny on error code pattern"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: deny-auth-errors
+          type: post
+          tool: "API"
+          when:
+            result.status_code:
+              in: [401, 403]
+          then:
+            effect: deny
+            message: "Auth failure — result suppressed"
+
+    envelope:
+      tool_name: "API"
+      arguments:
+        url: "/admin/secrets"
+        method: "GET"
+
+    result:
+      status_code: 403
+      body: "Forbidden"
+
+    expected:
+      verdict: denied
+      message_contains: "Auth failure"

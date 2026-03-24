@@ -1,0 +1,93 @@
+suite: wildcard-matching
+version: 1
+description: "Fnmatch-style wildcard patterns in tool selectors"
+
+fixtures:
+  - id: "wildcard-001"
+    description: "Prefix glob matches tool names starting with pattern"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: block-mcp-tools
+          type: pre
+          tool: "mcp_*"
+          when:
+            args.action:
+              equals: "delete"
+          then:
+            effect: deny
+            message: "MCP tools cannot perform deletes"
+
+    envelope:
+      tool_name: "mcp_github"
+      arguments:
+        action: "delete"
+
+    expected:
+      verdict: denied
+      message_contains: "MCP tools"
+
+  - id: "wildcard-002"
+    description: "Prefix glob does not match non-matching tool"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: block-mcp-tools
+          type: pre
+          tool: "mcp_*"
+          when:
+            args.action:
+              equals: "delete"
+          then:
+            effect: deny
+            message: "MCP tools cannot perform deletes"
+
+    envelope:
+      tool_name: "Bash"
+      arguments:
+        action: "delete"
+
+    expected:
+      verdict: allowed
+
+  - id: "wildcard-003"
+    description: "Star matches all tools"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: block-all-admin
+          type: pre
+          tool: "*"
+          when:
+            args.role:
+              equals: "admin"
+          then:
+            effect: deny
+            message: "Admin operations are blocked"
+
+    envelope:
+      tool_name: "AnyToolName"
+      arguments:
+        role: "admin"
+
+    expected:
+      verdict: denied
+      message_contains: "Admin"

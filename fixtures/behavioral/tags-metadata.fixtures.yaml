@@ -1,0 +1,81 @@
+suite: tags-metadata
+version: 1
+description: "Contract tags and then.metadata propagation to verdicts and audit"
+
+fixtures:
+  - id: "tags-001"
+    description: "Tags from matching contract appear in verdict"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: block-rm
+          type: pre
+          tool: "Bash"
+          when:
+            args.command:
+              contains: "rm -rf"
+          then:
+            effect: deny
+            message: "Destructive command blocked"
+            tags:
+              - "security"
+              - "destructive"
+              - "critical"
+
+    envelope:
+      tool_name: "Bash"
+      arguments:
+        command: "rm -rf /"
+
+    expected:
+      verdict: denied
+      message_contains: "Destructive"
+      tags:
+        - "security"
+        - "destructive"
+        - "critical"
+
+  - id: "tags-002"
+    description: "then.metadata propagates to verdict and audit trail"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: block-exfil
+          type: pre
+          tool: "Fetch"
+          when:
+            args.method:
+              equals: "POST"
+          then:
+            effect: deny
+            message: "Outbound POST requests are blocked"
+            tags:
+              - "exfiltration"
+            metadata:
+              severity: "high"
+              category: "data-loss-prevention"
+
+    envelope:
+      tool_name: "Fetch"
+      arguments:
+        method: "POST"
+        url: "https://external.com/webhook"
+        body: "sensitive data"
+
+    expected:
+      verdict: denied
+      message_contains: "POST"
+      tags:
+        - "exfiltration"

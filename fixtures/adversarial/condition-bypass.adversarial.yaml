@@ -1,0 +1,67 @@
+suite: condition-bypass
+version: 1
+description: "Adversarial attempts to bypass when-condition evaluation"
+
+fixtures:
+  - id: "adv-cond-001"
+    description: "Type confusion — numeric string where number expected must not crash"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: check-amount
+          type: pre
+          tool: "Transfer"
+          when:
+            args.amount:
+              gt: 1000
+          then:
+            effect: deny
+            message: "Amount exceeds limit"
+
+    envelope:
+      tool_name: "Transfer"
+      arguments:
+        amount: "99999"
+
+    expected:
+      # String "99999" vs numeric gt:1000 — implementation must handle type mismatch
+      # Safest behavior: deny or error, never silently allow
+      verdict: denied
+      message_contains: "limit"
+
+  - id: "adv-cond-002"
+    description: "Missing field referenced in condition must not crash evaluator"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: check-path
+          type: pre
+          tool: "Write"
+          when:
+            args.file_path:
+              starts_with: "/etc"
+          then:
+            effect: deny
+            message: "Cannot write to /etc"
+
+    envelope:
+      tool_name: "Write"
+      arguments:
+        content: "malicious data"
+        # Note: file_path is intentionally missing
+
+    expected:
+      # Missing field should not crash — condition should not match
+      verdict: allowed

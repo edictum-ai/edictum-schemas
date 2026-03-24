@@ -1,0 +1,105 @@
+suite: postcondition-warn
+version: 1
+description: "Postcondition contracts that warn on tool results"
+
+fixtures:
+  - id: "post-warn-001"
+    description: "Result containing sensitive data triggers warn"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: warn-secrets
+          type: post
+          tool: "Bash"
+          when:
+            result.output:
+              matches: "(?i)(api[_-]?key|secret[_-]?key)\\s*[:=]"
+          then:
+            effect: warn
+            message: "Output may contain secrets"
+
+    envelope:
+      tool_name: "Bash"
+      arguments:
+        command: "cat config.env"
+
+    result:
+      output: "API_KEY=sk-abc123\nDEBUG=true"
+
+    expected:
+      verdict: warned
+      message_contains: "secrets"
+
+  - id: "post-warn-002"
+    description: "Result not matching postcondition is allowed"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: warn-secrets
+          type: post
+          tool: "Bash"
+          when:
+            result.output:
+              matches: "(?i)(api[_-]?key|secret[_-]?key)\\s*[:=]"
+          then:
+            effect: warn
+            message: "Output may contain secrets"
+
+    envelope:
+      tool_name: "Bash"
+      arguments:
+        command: "echo hello"
+
+    result:
+      output: "hello"
+
+    expected:
+      verdict: allowed
+
+  - id: "post-warn-003"
+    description: "Postcondition with contains_any matches any substring"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: warn-pii
+          type: post
+          tool: "*"
+          when:
+            result.output:
+              contains_any:
+                - "SSN:"
+                - "social security"
+                - "date of birth"
+          then:
+            effect: warn
+            message: "Output may contain PII"
+
+    envelope:
+      tool_name: "Read"
+      arguments:
+        file_path: "/data/users.csv"
+
+    result:
+      output: "John Doe, date of birth: 1990-01-01"
+
+    expected:
+      verdict: warned
+      message_contains: "PII"

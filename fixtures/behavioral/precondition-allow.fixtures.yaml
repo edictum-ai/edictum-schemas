@@ -1,0 +1,91 @@
+suite: precondition-allow
+version: 1
+description: "Precondition contracts that allow tool calls"
+
+fixtures:
+  - id: "pre-allow-001"
+    description: "Tool call with no matching contract is allowed"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: block-rm
+          type: pre
+          tool: "Bash"
+          when:
+            args.command:
+              contains: "rm -rf"
+          then:
+            effect: deny
+            message: "Cannot run rm -rf"
+
+    envelope:
+      tool_name: "Read"
+      arguments:
+        file_path: "/tmp/safe.txt"
+
+    expected:
+      verdict: allowed
+
+  - id: "pre-allow-002"
+    description: "Matching tool but when condition evaluates false is allowed"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: block-rm
+          type: pre
+          tool: "Bash"
+          when:
+            args.command:
+              contains: "rm -rf"
+          then:
+            effect: deny
+            message: "Cannot run rm -rf"
+
+    envelope:
+      tool_name: "Bash"
+      arguments:
+        command: "ls -la /tmp"
+
+    expected:
+      verdict: allowed
+
+  - id: "pre-allow-003"
+    description: "Approve effect explicitly allows matching call"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: allow-safe-reads
+          type: pre
+          tool: "Bash"
+          when:
+            args.command:
+              starts_with: "cat "
+          then:
+            effect: approve
+            message: "Read operations are approved"
+
+    envelope:
+      tool_name: "Bash"
+      arguments:
+        command: "cat /tmp/log.txt"
+
+    expected:
+      verdict: allowed

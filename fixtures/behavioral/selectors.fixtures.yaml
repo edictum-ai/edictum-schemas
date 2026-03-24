@@ -1,0 +1,313 @@
+suite: selectors
+version: 1
+description: "All selector types: args.*, result.*, env.*, principal.*, metadata.*, nested paths"
+
+fixtures:
+  # ── args.* selectors ────────────────────────────────────────────────
+  - id: "sel-args-001"
+    description: "args.* selector reads from envelope arguments"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: check-args
+          type: pre
+          tool: "Write"
+          when:
+            args.file_path:
+              starts_with: "/etc"
+          then:
+            effect: deny
+            message: "Cannot write to /etc"
+
+    envelope:
+      tool_name: "Write"
+      arguments:
+        file_path: "/etc/hosts"
+        content: "127.0.0.1 evil.com"
+
+    expected:
+      verdict: denied
+      message_contains: "/etc"
+
+  # ── Nested args selector ────────────────────────────────────────────
+  - id: "sel-args-nested-001"
+    description: "Nested args selector with dot notation"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: check-nested
+          type: pre
+          tool: "API"
+          when:
+            args.headers.authorization:
+              contains: "Basic"
+          then:
+            effect: deny
+            message: "Basic auth is not allowed"
+
+    envelope:
+      tool_name: "API"
+      arguments:
+        url: "/admin"
+        headers:
+          authorization: "Basic dXNlcjpwYXNz"
+
+    expected:
+      verdict: denied
+      message_contains: "Basic auth"
+
+  # ── result.* selectors (postcondition) ──────────────────────────────
+  - id: "sel-result-001"
+    description: "result.* selector reads from tool result"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: check-result
+          type: post
+          tool: "Bash"
+          when:
+            result.exit_code:
+              not_equals: 0
+          then:
+            effect: warn
+            message: "Command exited with non-zero status"
+
+    envelope:
+      tool_name: "Bash"
+      arguments:
+        command: "false"
+
+    result:
+      output: ""
+      exit_code: 1
+
+    expected:
+      verdict: warned
+      message_contains: "non-zero"
+
+  # ── env.* selectors ─────────────────────────────────────────────────
+  - id: "sel-env-001"
+    description: "env.* selector reads from execution environment"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: block-prod-writes
+          type: pre
+          tool: "Write"
+          when:
+            all:
+              - env.ENVIRONMENT:
+                  equals: "production"
+              - args.file_path:
+                  starts_with: "/config"
+          then:
+            effect: deny
+            message: "Cannot modify config files in production"
+
+    envelope:
+      tool_name: "Write"
+      arguments:
+        file_path: "/config/app.yaml"
+        content: "debug: true"
+
+    environment:
+      ENVIRONMENT: "production"
+
+    expected:
+      verdict: denied
+      message_contains: "production"
+
+  - id: "sel-env-002"
+    description: "env.* selector does not match different environment"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: block-prod-writes
+          type: pre
+          tool: "Write"
+          when:
+            all:
+              - env.ENVIRONMENT:
+                  equals: "production"
+              - args.file_path:
+                  starts_with: "/config"
+          then:
+            effect: deny
+            message: "Cannot modify config files in production"
+
+    envelope:
+      tool_name: "Write"
+      arguments:
+        file_path: "/config/app.yaml"
+        content: "debug: true"
+
+    environment:
+      ENVIRONMENT: "staging"
+
+    expected:
+      verdict: allowed
+
+  # ── principal.* selectors ───────────────────────────────────────────
+  - id: "sel-principal-001"
+    description: "principal.* selector reads agent/user identity"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: block-junior-deploys
+          type: pre
+          tool: "Deploy"
+          when:
+            principal.role:
+              in: ["junior", "intern"]
+          then:
+            effect: deny
+            message: "Junior roles cannot deploy"
+
+    envelope:
+      tool_name: "Deploy"
+      arguments:
+        target: "production"
+
+    principal:
+      id: "agent-123"
+      role: "junior"
+      name: "test-agent"
+
+    expected:
+      verdict: denied
+      message_contains: "Junior"
+
+  - id: "sel-principal-002"
+    description: "principal.* selector allows authorized role"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: block-junior-deploys
+          type: pre
+          tool: "Deploy"
+          when:
+            principal.role:
+              in: ["junior", "intern"]
+          then:
+            effect: deny
+            message: "Junior roles cannot deploy"
+
+    envelope:
+      tool_name: "Deploy"
+      arguments:
+        target: "production"
+
+    principal:
+      id: "agent-456"
+      role: "senior"
+      name: "lead-agent"
+
+    expected:
+      verdict: allowed
+
+  # ── metadata.* selectors ────────────────────────────────────────────
+  - id: "sel-metadata-001"
+    description: "metadata.* selector reads call metadata"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: block-untagged
+          type: pre
+          tool: "*"
+          when:
+            metadata.request_id:
+              exists: false
+          then:
+            effect: deny
+            message: "All calls must include a request_id"
+
+    envelope:
+      tool_name: "API"
+      arguments:
+        url: "/data"
+
+    call_metadata: {}
+
+    expected:
+      verdict: denied
+      message_contains: "request_id"
+
+  - id: "sel-metadata-002"
+    description: "metadata.* selector allows when field present"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: block-untagged
+          type: pre
+          tool: "*"
+          when:
+            metadata.request_id:
+              exists: false
+          then:
+            effect: deny
+            message: "All calls must include a request_id"
+
+    envelope:
+      tool_name: "API"
+      arguments:
+        url: "/data"
+
+    call_metadata:
+      request_id: "req-abc-123"
+
+    expected:
+      verdict: allowed
