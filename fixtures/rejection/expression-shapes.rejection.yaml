@@ -1,0 +1,114 @@
+suite: expression-shapes
+version: 1
+description: "Malformed expression trees in when clauses"
+
+fixtures:
+  - id: "rej-050"
+    description: "Empty all array in when expression — minItems is 1"
+    bundle:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: c1
+          type: pre
+          tool: "*"
+          when:
+            all: []
+          then:
+            effect: deny
+            message: "denied"
+    expected:
+      rejected: true
+      error_contains: "all"
+
+  - id: "rej-051"
+    description: "Empty any array in when expression — minItems is 1"
+    bundle:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: c1
+          type: pre
+          tool: "*"
+          when:
+            any: []
+          then:
+            effect: deny
+            message: "denied"
+    expected:
+      rejected: true
+      error_contains: "any"
+
+  - id: "rej-052"
+    description: "gt operator with string value — must be number"
+    bundle:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: c1
+          type: pre
+          tool: "*"
+          when:
+            args.count: { gt: "five" }
+          then:
+            effect: deny
+            message: "denied"
+    expected:
+      rejected: true
+      error_contains: "gt"
+
+  - id: "rej-053"
+    description: "contains operator with number value — must be string"
+    bundle:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: c1
+          type: pre
+          tool: "*"
+          when:
+            args.command: { contains: 42 }
+          then:
+            effect: deny
+            message: "denied"
+    expected:
+      rejected: true
+      error_contains: "contains"
+
+  - id: "rej-054"
+    description: "in operator with empty array — minItems is 1"
+    bundle:
+      apiVersion: edictum/v1
+      kind: ContractBundle
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      contracts:
+        - id: c1
+          type: pre
+          tool: "*"
+          when:
+            args.x: { in: [] }
+          then:
+            effect: deny
+            message: "denied"
+    expected:
+      rejected: true
+      error_contains: "in"
