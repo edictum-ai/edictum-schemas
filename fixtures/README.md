@@ -20,10 +20,10 @@ fixtures:
       apiVersion: edictum/v1
       kind: Ruleset
       metadata:
-        name: test-bundle
+        name: test-ruleset
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - ...                 # One or more rules
 
     envelope:                 # The tool call being evaluated
@@ -70,7 +70,7 @@ Each implementation should:
 1. **Discover** all `*.fixtures.yaml` and `*.adversarial.yaml` files under `fixtures/`.
 2. **Parse** each file and iterate over the `fixtures` array.
 3. **Load** the `contract` field as a `Ruleset`.
-4. **Evaluate** the contract against the `envelope` (and `result`/`session` where applicable).
+4. **Evaluate** the ruleset against the `envelope` (and `result`/`session` where applicable).
 5. **Assert** that the actual verdict matches `expected.verdict`.
 6. **Assert** that `expected.message_contains` (if present) is a substring of the verdict message.
 7. **Assert** that `expected.audit_action` (if present) matches the audit trail action.
@@ -83,8 +83,8 @@ import yaml, glob, pytest
 
 @pytest.mark.parametrize("fixture", load_all_fixtures())
 def test_fixture(fixture):
-    bundle = load_bundle(fixture["contract"])
-    verdict = evaluate(bundle, fixture["envelope"])
+    ruleset = load_bundle(fixture["contract"])
+    verdict = evaluate(ruleset, fixture["envelope"])
     assert verdict.status == fixture["expected"]["verdict"]
 ```
 
@@ -96,8 +96,8 @@ import { loadFixtures } from "./helpers";
 
 for (const f of loadFixtures()) {
   it(f.id, () => {
-    const bundle = loadBundle(f.contract);
-    const verdict = evaluate(bundle, f.envelope);
+    const ruleset = loadBundle(f.contract);
+    const verdict = evaluate(ruleset, f.envelope);
     expect(verdict.status).toBe(f.expected.verdict);
   });
 }
@@ -109,8 +109,8 @@ for (const f of loadFixtures()) {
 func TestFixtures(t *testing.T) {
     for _, f := range loadFixtures(t) {
         t.Run(f.ID, func(t *testing.T) {
-            bundle := loadBundle(t, f.Contract)
-            verdict := evaluate(bundle, f.Envelope)
+            ruleset := loadBundle(t, f.Contract)
+            verdict := evaluate(ruleset, f.Envelope)
             assert.Equal(t, f.Expected.Verdict, verdict.Status)
         })
     }
