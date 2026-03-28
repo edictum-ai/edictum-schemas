@@ -9,12 +9,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: check-args
           type: pre
           tool: "Write"
@@ -22,7 +22,7 @@ fixtures:
             args.file_path:
               starts_with: "/etc"
           then:
-            effect: deny
+            action: block
             message: "Cannot write to /etc"
 
     envelope:
@@ -41,12 +41,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: check-nested
           type: pre
           tool: "API"
@@ -54,7 +54,7 @@ fixtures:
             args.headers.authorization:
               contains: "Basic"
           then:
-            effect: deny
+            action: block
             message: "Basic auth is not allowed"
 
     envelope:
@@ -74,12 +74,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: check-result
           type: post
           tool: "Bash"
@@ -87,7 +87,7 @@ fixtures:
             result.exit_code:
               not_equals: 0
           then:
-            effect: warn
+            action: warn
             message: "Command exited with non-zero status"
 
     envelope:
@@ -109,12 +109,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: block-prod-writes
           type: pre
           tool: "Write"
@@ -125,7 +125,7 @@ fixtures:
               - args.file_path:
                   starts_with: "/config"
           then:
-            effect: deny
+            action: block
             message: "Cannot modify config files in production"
 
     envelope:
@@ -146,12 +146,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: block-prod-writes
           type: pre
           tool: "Write"
@@ -162,7 +162,7 @@ fixtures:
               - args.file_path:
                   starts_with: "/config"
           then:
-            effect: deny
+            action: block
             message: "Cannot modify config files in production"
 
     envelope:
@@ -183,12 +183,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: block-junior-deploys
           type: pre
           tool: "Deploy"
@@ -196,7 +196,7 @@ fixtures:
             principal.role:
               in: ["junior", "intern"]
           then:
-            effect: deny
+            action: block
             message: "Junior roles cannot deploy"
 
     envelope:
@@ -218,12 +218,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: block-junior-deploys
           type: pre
           tool: "Deploy"
@@ -231,7 +231,7 @@ fixtures:
             principal.role:
               in: ["junior", "intern"]
           then:
-            effect: deny
+            action: block
             message: "Junior roles cannot deploy"
 
     envelope:
@@ -253,12 +253,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: block-untagged
           type: pre
           tool: "*"
@@ -266,7 +266,7 @@ fixtures:
             metadata.request_id:
               exists: false
           then:
-            effect: deny
+            action: block
             message: "All calls must include a request_id"
 
     envelope:
@@ -285,12 +285,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: block-untagged
           type: pre
           tool: "*"
@@ -298,7 +298,7 @@ fixtures:
             metadata.request_id:
               exists: false
           then:
-            effect: deny
+            action: block
             message: "All calls must include a request_id"
 
     envelope:

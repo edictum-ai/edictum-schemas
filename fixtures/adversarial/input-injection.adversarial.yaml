@@ -8,12 +8,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: check-content
           type: pre
           tool: "Write"
@@ -21,7 +21,7 @@ fixtures:
             args.content:
               contains: "malicious"
           then:
-            effect: deny
+            action: block
             message: "Malicious content detected"
 
     envelope:
@@ -40,12 +40,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: check-parens
           type: pre
           tool: "Write"
@@ -53,7 +53,7 @@ fixtures:
             args.content:
               contains: "$()"
           then:
-            effect: deny
+            action: block
             message: "Shell expansion detected"
 
     envelope:
@@ -72,12 +72,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: block-admin
           type: pre
           tool: "API"
@@ -85,7 +85,7 @@ fixtures:
             args.role:
               equals: "admin"
           then:
-            effect: deny
+            action: block
             message: "Admin access blocked"
 
     envelope:

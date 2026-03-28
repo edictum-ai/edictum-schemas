@@ -7,17 +7,17 @@ fixtures:
     description: "Missing metadata key entirely"
     bundle:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: c1
           type: pre
           tool: "*"
           when:
             args.x: { equals: 1 }
           then:
-            effect: deny
+            action: block
             message: "denied"
     expected:
       rejected: true
@@ -27,18 +27,18 @@ fixtures:
     description: "Metadata as string instead of object"
     bundle:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata: "not-an-object"
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: c1
           type: pre
           tool: "*"
           when:
             args.x: { equals: 1 }
           then:
-            effect: deny
+            action: block
             message: "denied"
     expected:
       rejected: true
@@ -48,17 +48,17 @@ fixtures:
     description: "Missing defaults key entirely"
     bundle:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
-      contracts:
+      rules:
         - id: c1
           type: pre
           tool: "*"
           when:
             args.x: { equals: 1 }
           then:
-            effect: deny
+            action: block
             message: "denied"
     expected:
       rejected: true
@@ -68,18 +68,18 @@ fixtures:
     description: "Defaults object without required mode field"
     bundle:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults: {}
-      contracts:
+      rules:
         - id: c1
           type: pre
           tool: "*"
           when:
             args.x: { equals: 1 }
           then:
-            effect: deny
+            action: block
             message: "denied"
     expected:
       rejected: true
@@ -89,19 +89,19 @@ fixtures:
     description: "Invalid defaults.mode value"
     bundle:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: permissive
-      contracts:
+      rules:
         - id: c1
           type: pre
           tool: "*"
           when:
             args.x: { equals: 1 }
           then:
-            effect: deny
+            action: block
             message: "denied"
     expected:
       rejected: true
@@ -111,12 +111,12 @@ fixtures:
     description: "Empty contracts array"
     bundle:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts: []
+      rules: []
     expected:
       rejected: true
       error_contains: "contracts"
@@ -125,19 +125,19 @@ fixtures:
     description: "Missing metadata.name field"
     bundle:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         description: "has description but no name"
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: c1
           type: pre
           tool: "*"
           when:
             args.x: { equals: 1 }
           then:
-            effect: deny
+            action: block
             message: "denied"
     expected:
       rejected: true
@@ -147,19 +147,19 @@ fixtures:
     description: "Invalid metadata.name pattern — uppercase not allowed"
     bundle:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: "INVALID-NAME"
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: c1
           type: pre
           tool: "*"
           when:
             args.x: { equals: 1 }
           then:
-            effect: deny
+            action: block
             message: "denied"
     expected:
       rejected: true

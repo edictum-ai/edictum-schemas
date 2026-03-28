@@ -9,12 +9,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: check-all
           type: pre
           tool: "API"
@@ -25,7 +25,7 @@ fixtures:
               - args.url:
                   starts_with: "/admin"
           then:
-            effect: deny
+            action: block
             message: "Cannot DELETE admin resources"
 
     envelope:
@@ -43,12 +43,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: check-all
           type: pre
           tool: "API"
@@ -59,7 +59,7 @@ fixtures:
               - args.url:
                   starts_with: "/admin"
           then:
-            effect: deny
+            action: block
             message: "Cannot DELETE admin resources"
 
     envelope:
@@ -77,12 +77,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: check-any
           type: pre
           tool: "Bash"
@@ -95,7 +95,7 @@ fixtures:
               - args.command:
                   contains: "> /dev/sd"
           then:
-            effect: deny
+            action: block
             message: "Destructive command detected"
 
     envelope:
@@ -112,12 +112,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: check-any
           type: pre
           tool: "Bash"
@@ -130,7 +130,7 @@ fixtures:
               - args.command:
                   contains: "> /dev/sd"
           then:
-            effect: deny
+            action: block
             message: "Destructive command detected"
 
     envelope:
@@ -147,12 +147,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: require-https
           type: pre
           tool: "Fetch"
@@ -161,7 +161,7 @@ fixtures:
               args.url:
                 starts_with: "https://"
           then:
-            effect: deny
+            action: block
             message: "Only HTTPS URLs are allowed"
 
     envelope:
@@ -178,12 +178,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: require-https
           type: pre
           tool: "Fetch"
@@ -192,7 +192,7 @@ fixtures:
               args.url:
                 starts_with: "https://"
           then:
-            effect: deny
+            action: block
             message: "Only HTTPS URLs are allowed"
 
     envelope:
@@ -209,12 +209,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: complex-rule
           type: pre
           tool: "Bash"
@@ -229,7 +229,7 @@ fixtures:
                   args.command:
                     contains: "localhost"
           then:
-            effect: deny
+            action: block
             message: "External network requests are blocked"
 
     envelope:
@@ -246,12 +246,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: complex-rule
           type: pre
           tool: "Bash"
@@ -266,7 +266,7 @@ fixtures:
                   args.command:
                     contains: "localhost"
           then:
-            effect: deny
+            action: block
             message: "External network requests are blocked"
 
     envelope:
