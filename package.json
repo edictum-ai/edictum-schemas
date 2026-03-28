@@ -5,7 +5,9 @@
   "description": "Shared JSON Schema for Edictum contract bundles",
   "license": "MIT",
   "exports": {
-    ".": "./schemas/edictum-v1.schema.json"
+    ".": "./schemas/edictum-v2.schema.json",
+    "./schemas/edictum-v1.schema.json": "./schemas/edictum-v1.schema.json",
+    "./schemas/edictum-v2.schema.json": "./schemas/edictum-v2.schema.json"
   },
   "files": [
     "schemas"
