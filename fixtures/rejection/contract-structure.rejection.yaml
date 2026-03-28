@@ -7,18 +7,18 @@ fixtures:
     description: "Contract missing id field"
     bundle:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - type: pre
           tool: "*"
           when:
             args.x: { equals: 1 }
           then:
-            effect: deny
+            action: block
             message: "denied"
     expected:
       rejected: true
@@ -28,19 +28,19 @@ fixtures:
     description: "Contract id is empty string"
     bundle:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: ""
           type: pre
           tool: "*"
           when:
             args.x: { equals: 1 }
           then:
-            effect: deny
+            action: block
             message: "denied"
     expected:
       rejected: true
@@ -50,19 +50,19 @@ fixtures:
     description: "Contract id with uppercase characters"
     bundle:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: "UPPER-CASE"
           type: pre
           tool: "*"
           when:
             args.x: { equals: 1 }
           then:
-            effect: deny
+            action: block
             message: "denied"
     expected:
       rejected: true
@@ -72,19 +72,19 @@ fixtures:
     description: "Contract id with dots — only lowercase, digits, hyphens, underscores allowed"
     bundle:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: "has.dot"
           type: pre
           tool: "*"
           when:
             args.x: { equals: 1 }
           then:
-            effect: deny
+            action: block
             message: "denied"
     expected:
       rejected: true
@@ -94,18 +94,18 @@ fixtures:
     description: "Contract missing type field"
     bundle:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: c1
           tool: "*"
           when:
             args.x: { equals: 1 }
           then:
-            effect: deny
+            action: block
             message: "denied"
     expected:
       rejected: true
@@ -115,19 +115,19 @@ fixtures:
     description: "Contract with invalid type value"
     bundle:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: c1
           type: rule
           tool: "*"
           when:
             args.x: { equals: 1 }
           then:
-            effect: deny
+            action: block
             message: "denied"
     expected:
       rejected: true
@@ -137,18 +137,18 @@ fixtures:
     description: "Pre contract missing tool field"
     bundle:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: c1
           type: pre
           when:
             args.x: { equals: 1 }
           then:
-            effect: deny
+            action: block
             message: "denied"
     expected:
       rejected: true
@@ -158,17 +158,17 @@ fixtures:
     description: "Pre contract missing when field"
     bundle:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: c1
           type: pre
           tool: "*"
           then:
-            effect: deny
+            action: block
             message: "denied"
     expected:
       rejected: true
@@ -178,12 +178,12 @@ fixtures:
     description: "Pre contract missing then field"
     bundle:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: c1
           type: pre
           tool: "*"
@@ -197,12 +197,12 @@ fixtures:
     description: "Pre contract then block missing effect"
     bundle:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: c1
           type: pre
           tool: "*"
@@ -212,25 +212,25 @@ fixtures:
             message: "denied"
     expected:
       rejected: true
-      error_contains: "effect"
+      error_contains: "action"
 
   - id: "rej-020"
     description: "Pre contract then block missing message"
     bundle:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: c1
           type: pre
           tool: "*"
           when:
             args.x: { equals: 1 }
           then:
-            effect: deny
+            action: block
     expected:
       rejected: true
       error_contains: "message"
@@ -239,18 +239,18 @@ fixtures:
     description: "Post contract missing tool field"
     bundle:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: c1
           type: post
           when:
             result.status: { equals: "error" }
           then:
-            effect: warn
+            action: warn
             message: "error detected"
     expected:
       rejected: true
@@ -260,17 +260,17 @@ fixtures:
     description: "Post contract missing when field"
     bundle:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: c1
           type: post
           tool: "*"
           then:
-            effect: warn
+            action: warn
             message: "warning"
     expected:
       rejected: true
@@ -280,12 +280,12 @@ fixtures:
     description: "Post contract missing then field"
     bundle:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: c1
           type: post
           tool: "*"
@@ -299,16 +299,16 @@ fixtures:
     description: "Session contract missing limits field"
     bundle:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: c1
           type: session
           then:
-            effect: deny
+            action: block
             message: "limit exceeded"
     expected:
       rejected: true
@@ -318,17 +318,17 @@ fixtures:
     description: "Session contract with empty limits object"
     bundle:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: c1
           type: session
           limits: {}
           then:
-            effect: deny
+            action: block
             message: "limit exceeded"
     expected:
       rejected: true
@@ -338,12 +338,12 @@ fixtures:
     description: "Session contract missing then field"
     bundle:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: c1
           type: session
           limits:
@@ -356,18 +356,18 @@ fixtures:
     description: "Session contract then block missing message"
     bundle:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: c1
           type: session
           limits:
             max_tool_calls: 10
           then:
-            effect: deny
+            action: block
     expected:
       rejected: true
       error_contains: "message"
@@ -376,12 +376,12 @@ fixtures:
     description: "Sandbox contract missing both tool and tools fields"
     bundle:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: c1
           type: sandbox
           within:
@@ -395,12 +395,12 @@ fixtures:
     description: "Sandbox contract missing both within and allows fields"
     bundle:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: c1
           type: sandbox
           tool: "Bash"
@@ -413,12 +413,12 @@ fixtures:
     description: "Sandbox contract missing message field"
     bundle:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: c1
           type: sandbox
           tool: "Bash"

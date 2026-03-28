@@ -22,8 +22,8 @@ def test_schema_is_valid_json() -> None:
 def test_schema_top_level_keys() -> None:
     schema = load_schema()
     assert schema["$schema"] == "https://json-schema.org/draft/2020-12/schema"
-    assert schema["$id"] == "https://edictum.dev/schemas/edictum-v1-contractbundle.json"
-    assert schema["title"] == "Edictum ContractBundle v1"
+    assert schema["$id"] == "https://edictum.dev/schemas/edictum-v2-ruleset.json"
+    assert schema["title"] == "Edictum Ruleset v2"
     assert schema["type"] == "object"
 
 
@@ -34,7 +34,7 @@ def test_schema_required_fields() -> None:
     assert "kind" in required
     assert "metadata" in required
     assert "defaults" in required
-    assert "contracts" in required
+    assert "rules" in required
 
 
 def test_schema_defs_present() -> None:

@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://edictum.dev/schemas/edictum-v1-contractbundle.json",
-  "title": "Edictum ContractBundle v1 (deprecated)",
-  "description": "Deprecated compatibility schema path for Edictum v1 consumers. The canonical schema is edictum-v2.schema.json for Edictum YAML rulesets. This file is retained only to preserve the historical v1 schema identifier.",
+  "$id": "https://edictum.dev/schemas/edictum-v2-ruleset.json",
+  "title": "Edictum Ruleset v2",
+  "description": "Schema for Edictum YAML rulesets. Enforces structure, type-specific constraints, and action constraints.",
   "type": "object",
   "required": [
     "apiVersion",

@@ -8,12 +8,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: approve-deploy
           type: pre
           tool: "Deploy"
@@ -21,10 +21,10 @@ fixtures:
             args.target:
               equals: "production"
           then:
-            effect: approve
+            action: ask
             message: "Production deploy requires approval"
             timeout: 60
-            timeout_effect: deny
+            timeout_effect: block
 
     envelope:
       tool_name: "Deploy"
@@ -44,12 +44,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: approve-deploy
           type: pre
           tool: "Deploy"
@@ -57,10 +57,10 @@ fixtures:
             args.target:
               equals: "production"
           then:
-            effect: approve
+            action: ask
             message: "Production deploy requires approval"
             timeout: 60
-            timeout_effect: deny
+            timeout_effect: block
 
     envelope:
       tool_name: "Deploy"
@@ -78,12 +78,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: approve-deploy
           type: pre
           tool: "Deploy"
@@ -91,10 +91,10 @@ fixtures:
             args.target:
               equals: "production"
           then:
-            effect: approve
+            action: ask
             message: "Production deploy requires approval"
             timeout: 60
-            timeout_effect: deny
+            timeout_effect: block
 
     envelope:
       tool_name: "Deploy"
@@ -112,12 +112,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: sandbox-approve
           type: sandbox
           tool: "Write"
@@ -126,7 +126,7 @@ fixtures:
           outside: approve
           message: "Write outside project needs approval"
           timeout: 30
-          timeout_effect: deny
+          timeout_effect: block
 
     envelope:
       tool_name: "Write"
@@ -145,12 +145,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: sandbox-auto-approve
           type: sandbox
           tool: "Read"

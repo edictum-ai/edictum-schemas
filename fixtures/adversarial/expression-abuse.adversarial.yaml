@@ -8,12 +8,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: check-regex
           type: pre
           tool: "Write"
@@ -21,7 +21,7 @@ fixtures:
             args.content:
               matches: "^(a+)+$"
           then:
-            effect: deny
+            action: block
             message: "Pattern matched"
 
     envelope:
@@ -43,12 +43,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: check-long
           type: pre
           tool: "Write"
@@ -56,7 +56,7 @@ fixtures:
             args.content:
               contains: "needle"
           then:
-            effect: deny
+            action: block
             message: "Found needle"
 
     envelope:
@@ -75,12 +75,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: check-empty
           type: pre
           tool: "Write"
@@ -88,7 +88,7 @@ fixtures:
             args.content:
               equals: ""
           then:
-            effect: deny
+            action: block
             message: "Empty content not allowed"
 
     envelope:
@@ -106,12 +106,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: deep-nest
           type: pre
           tool: "Bash"
@@ -127,7 +127,7 @@ fixtures:
                             args.command:
                               contains: "rm"
           then:
-            effect: deny
+            action: block
             message: "Deeply nested expression matched"
 
     envelope:

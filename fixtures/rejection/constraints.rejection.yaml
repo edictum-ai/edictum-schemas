@@ -7,19 +7,19 @@ fixtures:
     description: "Message exceeds 500-character maximum length"
     bundle:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: c1
           type: pre
           tool: "*"
           when:
             args.x: { equals: 1 }
           then:
-            effect: deny
+            action: block
             message: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaX"
     expected:
       rejected: true
@@ -29,19 +29,19 @@ fixtures:
     description: "Unknown top-level field — additionalProperties is false"
     bundle:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: c1
           type: pre
           tool: "*"
           when:
             args.x: { equals: 1 }
           then:
-            effect: deny
+            action: block
             message: "denied"
       unknown_field: true
     expected:
@@ -52,19 +52,19 @@ fixtures:
     description: "Invalid tool side_effect enum value"
     bundle:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: c1
           type: pre
           tool: "*"
           when:
             args.x: { equals: 1 }
           then:
-            effect: deny
+            action: block
             message: "denied"
       tools:
         Bash:

@@ -7,107 +7,107 @@ fixtures:
     description: "Pre contract with effect 'warn' — only valid for post contracts"
     bundle:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: c1
           type: pre
           tool: "*"
           when:
             args.x: { equals: 1 }
           then:
-            effect: warn
+            action: warn
             message: "denied"
     expected:
       rejected: true
-      error_contains: "effect"
+      error_contains: "action"
 
   - id: "rej-041"
     description: "Pre contract with effect 'redact' — only valid for post contracts"
     bundle:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: c1
           type: pre
           tool: "*"
           when:
             args.x: { equals: 1 }
           then:
-            effect: redact
+            action: redact
             message: "denied"
     expected:
       rejected: true
-      error_contains: "effect"
+      error_contains: "action"
 
   - id: "rej-042"
     description: "Pre contract with effect 'allow' — not a valid effect value"
     bundle:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: c1
           type: pre
           tool: "*"
           when:
             args.x: { equals: 1 }
           then:
-            effect: allow
+            action: allow
             message: "denied"
     expected:
       rejected: true
-      error_contains: "effect"
+      error_contains: "action"
 
   - id: "rej-043"
     description: "Post contract with effect 'approve' — only valid for pre contracts"
     bundle:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: c1
           type: post
           tool: "*"
           when:
             result.status: { equals: "error" }
           then:
-            effect: approve
+            action: ask
             message: "error detected"
     expected:
       rejected: true
-      error_contains: "effect"
+      error_contains: "action"
 
   - id: "rej-044"
     description: "Session contract with effect 'warn' — must be 'deny'"
     bundle:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: c1
           type: session
           limits:
             max_tool_calls: 10
           then:
-            effect: warn
+            action: warn
             message: "limit exceeded"
     expected:
       rejected: true
-      error_contains: "effect"
+      error_contains: "action"

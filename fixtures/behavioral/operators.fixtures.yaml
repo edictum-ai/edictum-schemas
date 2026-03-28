@@ -9,12 +9,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: check-exists
           type: pre
           tool: "Bash"
@@ -22,7 +22,7 @@ fixtures:
             args.sudo:
               exists: true
           then:
-            effect: deny
+            action: block
             message: "Sudo argument must not be present"
 
     envelope:
@@ -40,12 +40,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: check-exists
           type: pre
           tool: "Bash"
@@ -53,7 +53,7 @@ fixtures:
             args.sudo:
               exists: true
           then:
-            effect: deny
+            action: block
             message: "Sudo argument must not be present"
 
     envelope:
@@ -69,12 +69,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: require-reason
           type: pre
           tool: "Delete"
@@ -82,7 +82,7 @@ fixtures:
             args.reason:
               exists: false
           then:
-            effect: deny
+            action: block
             message: "Deletion requires a reason field"
 
     envelope:
@@ -100,12 +100,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: block-delete-action
           type: pre
           tool: "API"
@@ -113,7 +113,7 @@ fixtures:
             args.method:
               equals: "DELETE"
           then:
-            effect: deny
+            action: block
             message: "DELETE method is blocked"
 
     envelope:
@@ -131,12 +131,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: block-delete-action
           type: pre
           tool: "API"
@@ -144,7 +144,7 @@ fixtures:
             args.method:
               equals: "DELETE"
           then:
-            effect: deny
+            action: block
             message: "DELETE method is blocked"
 
     envelope:
@@ -161,12 +161,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: block-port-22
           type: pre
           tool: "Connect"
@@ -174,7 +174,7 @@ fixtures:
             args.port:
               equals: 22
           then:
-            effect: deny
+            action: block
             message: "SSH port 22 is blocked"
 
     envelope:
@@ -192,12 +192,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: block-force
           type: pre
           tool: "Bash"
@@ -205,7 +205,7 @@ fixtures:
             args.force:
               equals: true
           then:
-            effect: deny
+            action: block
             message: "Force flag is not allowed"
 
     envelope:
@@ -224,12 +224,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: require-json
           type: pre
           tool: "API"
@@ -237,7 +237,7 @@ fixtures:
             args.content_type:
               not_equals: "application/json"
           then:
-            effect: deny
+            action: block
             message: "Only JSON content type is allowed"
 
     envelope:
@@ -255,12 +255,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: require-json
           type: pre
           tool: "API"
@@ -268,7 +268,7 @@ fixtures:
             args.content_type:
               not_equals: "application/json"
           then:
-            effect: deny
+            action: block
             message: "Only JSON content type is allowed"
 
     envelope:
@@ -286,12 +286,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: block-dangerous-cmds
           type: pre
           tool: "Bash"
@@ -299,7 +299,7 @@ fixtures:
             args.command:
               in: ["shutdown", "reboot", "halt"]
           then:
-            effect: deny
+            action: block
             message: "System commands are blocked"
 
     envelope:
@@ -316,12 +316,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: block-dangerous-cmds
           type: pre
           tool: "Bash"
@@ -329,7 +329,7 @@ fixtures:
             args.command:
               in: ["shutdown", "reboot", "halt"]
           then:
-            effect: deny
+            action: block
             message: "System commands are blocked"
 
     envelope:
@@ -346,12 +346,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: allow-only-safe
           type: pre
           tool: "Bash"
@@ -359,7 +359,7 @@ fixtures:
             args.command:
               not_in: ["ls", "cat", "echo", "pwd"]
           then:
-            effect: deny
+            action: block
             message: "Only safe commands are permitted"
 
     envelope:
@@ -376,12 +376,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: allow-only-safe
           type: pre
           tool: "Bash"
@@ -389,7 +389,7 @@ fixtures:
             args.command:
               not_in: ["ls", "cat", "echo", "pwd"]
           then:
-            effect: deny
+            action: block
             message: "Only safe commands are permitted"
 
     envelope:
@@ -406,12 +406,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: block-eval
           type: pre
           tool: "Bash"
@@ -419,7 +419,7 @@ fixtures:
             args.command:
               contains: "eval("
           then:
-            effect: deny
+            action: block
             message: "eval() is not allowed"
 
     envelope:
@@ -436,12 +436,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: block-eval
           type: pre
           tool: "Bash"
@@ -449,7 +449,7 @@ fixtures:
             args.command:
               contains: "eval("
           then:
-            effect: deny
+            action: block
             message: "eval() is not allowed"
 
     envelope:
@@ -466,12 +466,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: block-dangerous
           type: pre
           tool: "Bash"
@@ -482,7 +482,7 @@ fixtures:
                 - "mkfs"
                 - "dd if="
           then:
-            effect: deny
+            action: block
             message: "Destructive command detected"
 
     envelope:
@@ -499,12 +499,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: block-dangerous
           type: pre
           tool: "Bash"
@@ -515,7 +515,7 @@ fixtures:
                 - "mkfs"
                 - "dd if="
           then:
-            effect: deny
+            action: block
             message: "Destructive command detected"
 
     envelope:
@@ -532,12 +532,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: block-sudo
           type: pre
           tool: "Bash"
@@ -545,7 +545,7 @@ fixtures:
             args.command:
               starts_with: "sudo "
           then:
-            effect: deny
+            action: block
             message: "sudo is not allowed"
 
     envelope:
@@ -562,12 +562,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: block-sudo
           type: pre
           tool: "Bash"
@@ -575,7 +575,7 @@ fixtures:
             args.command:
               starts_with: "sudo "
           then:
-            effect: deny
+            action: block
             message: "sudo is not allowed"
 
     envelope:
@@ -592,12 +592,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: block-exe-upload
           type: pre
           tool: "Upload"
@@ -605,7 +605,7 @@ fixtures:
             args.filename:
               ends_with: ".exe"
           then:
-            effect: deny
+            action: block
             message: "Cannot upload executable files"
 
     envelope:
@@ -622,12 +622,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: block-exe-upload
           type: pre
           tool: "Upload"
@@ -635,7 +635,7 @@ fixtures:
             args.filename:
               ends_with: ".exe"
           then:
-            effect: deny
+            action: block
             message: "Cannot upload executable files"
 
     envelope:
@@ -652,12 +652,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: block-ip-literal
           type: pre
           tool: "Connect"
@@ -665,7 +665,7 @@ fixtures:
             args.host:
               matches: "^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}$"
           then:
-            effect: deny
+            action: block
             message: "Direct IP connections are not allowed"
 
     envelope:
@@ -682,12 +682,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: block-ip-literal
           type: pre
           tool: "Connect"
@@ -695,7 +695,7 @@ fixtures:
             args.host:
               matches: "^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}$"
           then:
-            effect: deny
+            action: block
             message: "Direct IP connections are not allowed"
 
     envelope:
@@ -712,12 +712,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: block-secret-patterns
           type: pre
           tool: "Write"
@@ -728,7 +728,7 @@ fixtures:
                 - "ghp_[A-Za-z0-9]{36}"
                 - "sk-[A-Za-z0-9]{48}"
           then:
-            effect: deny
+            action: block
             message: "Content contains secret material"
 
     envelope:
@@ -746,12 +746,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: block-secret-patterns
           type: pre
           tool: "Write"
@@ -762,7 +762,7 @@ fixtures:
                 - "ghp_[A-Za-z0-9]{36}"
                 - "sk-[A-Za-z0-9]{48}"
           then:
-            effect: deny
+            action: block
             message: "Content contains secret material"
 
     envelope:
@@ -780,12 +780,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: limit-batch-size
           type: pre
           tool: "BatchDelete"
@@ -793,7 +793,7 @@ fixtures:
             args.count:
               gt: 100
           then:
-            effect: deny
+            action: block
             message: "Batch size exceeds maximum of 100"
 
     envelope:
@@ -811,12 +811,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: limit-batch-size
           type: pre
           tool: "BatchDelete"
@@ -824,7 +824,7 @@ fixtures:
             args.count:
               gt: 100
           then:
-            effect: deny
+            action: block
             message: "Batch size exceeds maximum of 100"
 
     envelope:
@@ -842,12 +842,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: block-high-priority
           type: pre
           tool: "Notify"
@@ -855,7 +855,7 @@ fixtures:
             args.priority:
               gte: 5
           then:
-            effect: deny
+            action: block
             message: "High priority notifications require approval"
 
     envelope:
@@ -873,12 +873,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: block-high-priority
           type: pre
           tool: "Notify"
@@ -886,7 +886,7 @@ fixtures:
             args.priority:
               gte: 5
           then:
-            effect: deny
+            action: block
             message: "High priority notifications require approval"
 
     envelope:
@@ -904,12 +904,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: require-min-length
           type: pre
           tool: "Write"
@@ -917,7 +917,7 @@ fixtures:
             args.length:
               lt: 8
           then:
-            effect: deny
+            action: block
             message: "Content must be at least 8 characters"
 
     envelope:
@@ -935,12 +935,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: require-min-length
           type: pre
           tool: "Write"
@@ -948,7 +948,7 @@ fixtures:
             args.length:
               lt: 8
           then:
-            effect: deny
+            action: block
             message: "Content must be at least 8 characters"
 
     envelope:
@@ -966,12 +966,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: block-low-confidence
           type: pre
           tool: "Classify"
@@ -979,7 +979,7 @@ fixtures:
             args.confidence:
               lte: 0.5
           then:
-            effect: deny
+            action: block
             message: "Confidence too low for classification"
 
     envelope:
@@ -997,12 +997,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: block-low-confidence
           type: pre
           tool: "Classify"
@@ -1010,7 +1010,7 @@ fixtures:
             args.confidence:
               lte: 0.5
           then:
-            effect: deny
+            action: block
             message: "Confidence too low for classification"
 
     envelope:

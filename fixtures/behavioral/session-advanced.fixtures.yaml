@@ -8,18 +8,18 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: limit-retries
           type: session
           limits:
             max_attempts: 3
           then:
-            effect: deny
+            action: block
             message: "Maximum retry attempts exceeded"
 
     session:
@@ -39,18 +39,18 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: limit-retries
           type: session
           limits:
             max_attempts: 3
           then:
-            effect: deny
+            action: block
             message: "Maximum retry attempts exceeded"
 
     session:
@@ -69,12 +69,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: combined-limits
           type: session
           limits:
@@ -82,7 +82,7 @@ fixtures:
             max_calls_per_tool:
               Bash: 5
           then:
-            effect: deny
+            action: block
             message: "Call limit exceeded"
 
     session:
@@ -104,19 +104,19 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: limit-bash
           type: session
           limits:
             max_calls_per_tool:
               Bash: 5
           then:
-            effect: deny
+            action: block
             message: "Bash call limit exceeded"
 
     session:
@@ -138,19 +138,19 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: limit-observe
           type: session
           mode: observe
           limits:
             max_tool_calls: 5
           then:
-            effect: deny
+            action: block
             message: "Session limit exceeded"
 
     session:

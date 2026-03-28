@@ -8,12 +8,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: deny-large-output
           type: post
           tool: "Bash"
@@ -21,7 +21,7 @@ fixtures:
             result.byte_count:
               gt: 100000
           then:
-            effect: deny
+            action: block
             message: "Output too large to return"
 
     envelope:
@@ -42,12 +42,12 @@ fixtures:
 
     contract:
       apiVersion: edictum/v1
-      kind: ContractBundle
+      kind: Ruleset
       metadata:
         name: test-bundle
       defaults:
         mode: enforce
-      contracts:
+      rules:
         - id: deny-auth-errors
           type: post
           tool: "API"
@@ -55,7 +55,7 @@ fixtures:
             result.status_code:
               in: [401, 403]
           then:
-            effect: deny
+            action: block
             message: "Auth failure — result suppressed"
 
     envelope:
