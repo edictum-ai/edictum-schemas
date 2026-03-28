@@ -119,7 +119,7 @@ fixtures:
       rules: []
     expected:
       rejected: true
-      error_contains: "contracts"
+      error_contains: "rules"
 
   - id: "rej-007"
     description: "Missing metadata.name field"

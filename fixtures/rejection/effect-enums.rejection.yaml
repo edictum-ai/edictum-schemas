@@ -23,7 +23,7 @@ fixtures:
             message: "denied"
     expected:
       rejected: true
-      error_contains: "effect"
+      error_contains: "action"
 
   - id: "rej-041"
     description: "Pre contract with effect 'redact' — only valid for post contracts"
@@ -45,7 +45,7 @@ fixtures:
             message: "denied"
     expected:
       rejected: true
-      error_contains: "effect"
+      error_contains: "action"
 
   - id: "rej-042"
     description: "Pre contract with effect 'allow' — not a valid effect value"
@@ -67,7 +67,7 @@ fixtures:
             message: "denied"
     expected:
       rejected: true
-      error_contains: "effect"
+      error_contains: "action"
 
   - id: "rej-043"
     description: "Post contract with effect 'approve' — only valid for pre contracts"
@@ -89,7 +89,7 @@ fixtures:
             message: "error detected"
     expected:
       rejected: true
-      error_contains: "effect"
+      error_contains: "action"
 
   - id: "rej-044"
     description: "Session contract with effect 'warn' — must be 'deny'"
@@ -110,4 +110,4 @@ fixtures:
             message: "limit exceeded"
     expected:
       rejected: true
-      error_contains: "effect"
+      error_contains: "action"

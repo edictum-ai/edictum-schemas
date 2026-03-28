@@ -212,7 +212,7 @@ fixtures:
             message: "denied"
     expected:
       rejected: true
-      error_contains: "effect"
+      error_contains: "action"
 
   - id: "rej-020"
     description: "Pre contract then block missing message"
