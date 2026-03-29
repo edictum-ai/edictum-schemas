@@ -1,6 +1,6 @@
 # edictum-schemas
 
-Single source of truth for the Edictum ruleset JSON Schema, consumed by the Python library ([edictum](https://pypi.org/project/edictum/)), TypeScript library (edictum-ts), and Go library (edictum-go).
+Single source of truth for the Edictum ruleset JSON Schema and shared conformance fixtures, consumed by the Python library ([edictum](https://pypi.org/project/edictum/)), TypeScript library (edictum-ts), and Go library (edictum-go).
 
 ## Schema
 
@@ -15,6 +15,12 @@ The schema defines the structure for Edictum YAML rulesets (`edictum/v1` `Rulese
 
 `schemas/edictum-v2.schema.json` is the canonical file exported by this package and loaded by the Python helper.
 `schemas/edictum-v1.schema.json` is retained only as a deprecated compatibility alias for consumers that still reference the historical v1 schema identifier. SDK-level backward compatibility lives in the language implementations, not in a separate canonical v1 schema.
+
+## Conformance Fixtures
+
+Shared workflow gate fixtures for Spec 008 live under [`fixtures/workflow/`](fixtures/workflow/README.md).
+
+They define implementation-agnostic stage progression, approval, and evidence cases so each SDK can validate the same runtime semantics.
 
 ## Install
 
