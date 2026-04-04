@@ -1,0 +1,773 @@
+suite: workflow-coding-guard-core
+version: 1
+description: "Spec 017 P7 coding-guard workflow cases"
+
+workflows:
+  coding-guard:
+    apiVersion: edictum/v1
+    kind: Workflow
+    metadata:
+      name: coding-guard
+      version: "2026-04-03"
+    stages:
+      - id: read-analyze
+        description: "Read the task brief before coding"
+        tools: [Read, Grep, Glob]
+        exit:
+          - condition: file_read("TASK.md")
+            message: "Read TASK.md before coding"
+
+      - id: create-branch
+        description: "Create a working branch"
+        entry:
+          - condition: stage_complete("read-analyze")
+        tools: [Bash]
+        checks:
+          - command_matches: "^git\\s+(switch|checkout|branch)\\b"
+            message: "Only branch creation commands are allowed in create-branch"
+        exit:
+          - condition: command_matches("^git\\s+(switch|checkout|branch)\\b")
+            message: "Create a working branch before baseline verification"
+
+      - id: baseline-verify
+        description: "Run baseline verification"
+        entry:
+          - condition: stage_complete("create-branch")
+        tools: [Read, Grep, Bash]
+        checks:
+          - command_matches: "^pytest$"
+            message: "Only pytest is allowed in baseline-verify"
+        exit:
+          - condition: command_matches("^pytest$")
+            message: "Run pytest successfully before implementation"
+
+      - id: implement
+        description: "Write the code changes"
+        entry:
+          - condition: stage_complete("baseline-verify")
+        tools: [Read, Grep, Edit, Write, Bash]
+        checks:
+          - command_not_matches: "^pytest$"
+            message: "Verification commands belong in local-verify"
+          - command_not_matches: "^git\\s+(add|commit|push)\\b"
+            message: "No git add/commit/push during implementation"
+
+      - id: local-verify
+        description: "Run local verification"
+        entry:
+          - condition: stage_complete("implement")
+        tools: [Read, Grep, Bash]
+        checks:
+          - command_matches: "^pytest$"
+            message: "Only pytest is allowed in local-verify"
+          - command_not_matches: "^git\\s+(add|commit|push)\\b"
+            message: "No git add/commit/push during verification"
+        exit:
+          - condition: command_matches("^pytest$")
+            message: "Run pytest successfully before external review"
+
+      - id: external-review
+        description: "Pause for external review"
+        entry:
+          - condition: stage_complete("local-verify")
+        tools: [Read, Grep, Bash]
+        checks:
+          - command_matches: "^git\\s+(status|diff|show|log)\\b"
+            message: "Only review-safe git commands are allowed in external-review"
+        exit:
+          - condition: command_matches("^git\\s+(status|diff|show|log)\\b")
+            message: "Review the diff before approval"
+        approval:
+          message: "Approve only after external review confirms the implementation"
+
+      - id: docs-update
+        description: "Update docs if needed"
+        entry:
+          - condition: stage_complete("external-review")
+        tools: [Read, Grep, Edit, Write]
+
+      - id: push-pr
+        description: "Commit, push, and open a PR"
+        entry:
+          - condition: stage_complete("docs-update")
+        tools: [Bash]
+        checks:
+          - command_matches: "^(git\\s+(status|diff|add|commit|push)\\b|gh\\s+pr\\s+(create|edit|view)\\b)"
+            message: "Only git and gh pr commands are allowed in push-pr"
+          - command_not_matches: "^git\\s+push\\b.*\\bmain\\b"
+            message: "Push to a branch, not main"
+        exit:
+          - condition: command_matches("^git\\s+push\\b")
+            message: "Push the branch before waiting for CI"
+          - condition: command_not_matches("^git\\s+push\\b.*\\bmain\\b")
+            message: "Push to a branch, not main"
+
+      - id: ci-green
+        description: "Wait for CI to pass"
+        entry:
+          - condition: stage_complete("push-pr")
+        tools: [Bash]
+        checks:
+          - command_matches: "^(gh\\s+(run|pr\\s+checks)|curl)\\b"
+            message: "Only CI status check commands are allowed in ci-green"
+        exit:
+          - condition: command_matches("^gh\\s+pr\\s+checks\\b")
+            message: "Confirm CI is green before completion"
+
+      - id: done
+        description: "Write the concise completion summary"
+        entry:
+          - condition: stage_complete("ci-green")
+        tools: [Write]
+
+fixtures:
+  - id: wcg-001
+    workflow: coding-guard
+    description: "happy path reaches done after the coding stages complete in order"
+    initial_state:
+      session_id: session-cg-001
+      active_stage: read-analyze
+      completed_stages: []
+      approvals: {}
+      evidence:
+        reads: []
+        stage_calls: {}
+    steps:
+      - id: read-task
+        call:
+          tool: Read
+          args:
+            path: TASK.md
+        execution: success
+        expect:
+          decision: allow
+          active_stage: read-analyze
+          completed_stages: []
+          approvals: {}
+          evidence:
+            reads:
+              - TASK.md
+            stage_calls: {}
+
+      - id: create-branch
+        call:
+          tool: Bash
+          args:
+            command: git switch -c feat/017-p7-coding-guard-fixtures
+        execution: success
+        expect:
+          decision: allow
+          active_stage: create-branch
+          completed_stages:
+            - read-analyze
+          approvals: {}
+          evidence:
+            reads:
+              - TASK.md
+            stage_calls:
+              create-branch:
+                - git switch -c feat/017-p7-coding-guard-fixtures
+
+      - id: baseline-pytest
+        call:
+          tool: Bash
+          args:
+            command: pytest
+        execution: success
+        expect:
+          decision: allow
+          active_stage: baseline-verify
+          completed_stages:
+            - read-analyze
+            - create-branch
+          approvals: {}
+          evidence:
+            reads:
+              - TASK.md
+            stage_calls:
+              create-branch:
+                - git switch -c feat/017-p7-coding-guard-fixtures
+              baseline-verify:
+                - pytest
+
+      - id: edit-tests
+        call:
+          tool: Edit
+          args:
+            path: tests/test_schema_valid.py
+        execution: success
+        expect:
+          decision: allow
+          active_stage: implement
+          completed_stages:
+            - read-analyze
+            - create-branch
+            - baseline-verify
+          approvals: {}
+          evidence:
+            reads:
+              - TASK.md
+            stage_calls:
+              create-branch:
+                - git switch -c feat/017-p7-coding-guard-fixtures
+              baseline-verify:
+                - pytest
+
+      - id: local-pytest
+        call:
+          tool: Bash
+          args:
+            command: pytest
+        execution: success
+        expect:
+          decision: allow
+          active_stage: local-verify
+          completed_stages:
+            - read-analyze
+            - create-branch
+            - baseline-verify
+            - implement
+          approvals: {}
+          evidence:
+            reads:
+              - TASK.md
+            stage_calls:
+              create-branch:
+                - git switch -c feat/017-p7-coding-guard-fixtures
+              baseline-verify:
+                - pytest
+              local-verify:
+                - pytest
+
+      - id: review-diff
+        call:
+          tool: Bash
+          args:
+            command: git diff --stat
+        execution: success
+        expect:
+          decision: allow
+          active_stage: external-review
+          completed_stages:
+            - read-analyze
+            - create-branch
+            - baseline-verify
+            - implement
+            - local-verify
+          approvals: {}
+          evidence:
+            reads:
+              - TASK.md
+            stage_calls:
+              create-branch:
+                - git switch -c feat/017-p7-coding-guard-fixtures
+              baseline-verify:
+                - pytest
+              local-verify:
+                - pytest
+              external-review:
+                - git diff --stat
+
+      - id: approve-review-and-edit-docs
+        call:
+          tool: Edit
+          args:
+            path: fixtures/README.md
+        approval_outcomes:
+          - approved
+        execution: success
+        expect:
+          decision: allow
+          active_stage: docs-update
+          completed_stages:
+            - read-analyze
+            - create-branch
+            - baseline-verify
+            - implement
+            - local-verify
+            - external-review
+          approvals:
+            external-review: approved
+          evidence:
+            reads:
+              - TASK.md
+            stage_calls:
+              create-branch:
+                - git switch -c feat/017-p7-coding-guard-fixtures
+              baseline-verify:
+                - pytest
+              local-verify:
+                - pytest
+              external-review:
+                - git diff --stat
+
+      - id: stage-doc-changes
+        call:
+          tool: Bash
+          args:
+            command: git add fixtures/README.md
+        execution: success
+        expect:
+          decision: allow
+          active_stage: push-pr
+          completed_stages:
+            - read-analyze
+            - create-branch
+            - baseline-verify
+            - implement
+            - local-verify
+            - external-review
+            - docs-update
+          approvals:
+            external-review: approved
+          evidence:
+            reads:
+              - TASK.md
+            stage_calls:
+              create-branch:
+                - git switch -c feat/017-p7-coding-guard-fixtures
+              baseline-verify:
+                - pytest
+              local-verify:
+                - pytest
+              external-review:
+                - git diff --stat
+              push-pr:
+                - git add fixtures/README.md
+
+      - id: commit-branch
+        call:
+          tool: Bash
+          args:
+            command: 'git commit -m "feat: add coding-guard workflow fixtures"'
+        execution: success
+        expect:
+          decision: allow
+          active_stage: push-pr
+          completed_stages:
+            - read-analyze
+            - create-branch
+            - baseline-verify
+            - implement
+            - local-verify
+            - external-review
+            - docs-update
+          approvals:
+            external-review: approved
+          evidence:
+            reads:
+              - TASK.md
+            stage_calls:
+              create-branch:
+                - git switch -c feat/017-p7-coding-guard-fixtures
+              baseline-verify:
+                - pytest
+              local-verify:
+                - pytest
+              external-review:
+                - git diff --stat
+              push-pr:
+                - git add fixtures/README.md
+                - 'git commit -m "feat: add coding-guard workflow fixtures"'
+
+      - id: push-branch
+        call:
+          tool: Bash
+          args:
+            command: git push origin feat/017-p7-coding-guard-fixtures
+        execution: success
+        expect:
+          decision: allow
+          active_stage: push-pr
+          completed_stages:
+            - read-analyze
+            - create-branch
+            - baseline-verify
+            - implement
+            - local-verify
+            - external-review
+            - docs-update
+          approvals:
+            external-review: approved
+          evidence:
+            reads:
+              - TASK.md
+            stage_calls:
+              create-branch:
+                - git switch -c feat/017-p7-coding-guard-fixtures
+              baseline-verify:
+                - pytest
+              local-verify:
+                - pytest
+              external-review:
+                - git diff --stat
+              push-pr:
+                - git add fixtures/README.md
+                - 'git commit -m "feat: add coding-guard workflow fixtures"'
+                - git push origin feat/017-p7-coding-guard-fixtures
+
+      - id: wait-for-ci
+        call:
+          tool: Bash
+          args:
+            command: gh pr checks --watch
+        execution: success
+        expect:
+          decision: allow
+          active_stage: ci-green
+          completed_stages:
+            - read-analyze
+            - create-branch
+            - baseline-verify
+            - implement
+            - local-verify
+            - external-review
+            - docs-update
+            - push-pr
+          approvals:
+            external-review: approved
+          evidence:
+            reads:
+              - TASK.md
+            stage_calls:
+              create-branch:
+                - git switch -c feat/017-p7-coding-guard-fixtures
+              baseline-verify:
+                - pytest
+              local-verify:
+                - pytest
+              external-review:
+                - git diff --stat
+              push-pr:
+                - git add fixtures/README.md
+                - 'git commit -m "feat: add coding-guard workflow fixtures"'
+                - git push origin feat/017-p7-coding-guard-fixtures
+              ci-green:
+                - gh pr checks --watch
+
+      - id: write-summary
+        call:
+          tool: Write
+          args:
+            path: workflow-summary.md
+            content: "Workflow complete."
+        execution: success
+        expect:
+          decision: allow
+          active_stage: done
+          completed_stages:
+            - read-analyze
+            - create-branch
+            - baseline-verify
+            - implement
+            - local-verify
+            - external-review
+            - docs-update
+            - push-pr
+            - ci-green
+          approvals:
+            external-review: approved
+          evidence:
+            reads:
+              - TASK.md
+            stage_calls:
+              create-branch:
+                - git switch -c feat/017-p7-coding-guard-fixtures
+              baseline-verify:
+                - pytest
+              local-verify:
+                - pytest
+              external-review:
+                - git diff --stat
+              push-pr:
+                - git add fixtures/README.md
+                - git commit -m "feat: add coding-guard workflow fixtures"
+                - git push origin feat/017-p7-coding-guard-fixtures
+              ci-green:
+                - gh pr checks --watch
+
+  - id: wcg-002
+    workflow: coding-guard
+    description: "git push is blocked during implement"
+    initial_state:
+      session_id: session-cg-002
+      active_stage: implement
+      completed_stages:
+        - read-analyze
+        - create-branch
+        - baseline-verify
+      approvals: {}
+      evidence:
+        reads:
+          - TASK.md
+        stage_calls:
+          create-branch:
+            - git switch -c feat/017-p7-coding-guard-fixtures
+          baseline-verify:
+            - pytest
+    steps:
+      - id: push-during-implement
+        call:
+          tool: Bash
+          args:
+            command: git push origin feat/017-p7-coding-guard-fixtures
+        execution: not_run
+        expect:
+          decision: deny
+          active_stage: implement
+          completed_stages:
+            - read-analyze
+            - create-branch
+            - baseline-verify
+          approvals: {}
+          evidence:
+            reads:
+              - TASK.md
+            stage_calls:
+              create-branch:
+                - git switch -c feat/017-p7-coding-guard-fixtures
+              baseline-verify:
+                - pytest
+          message_contains: "No git add/commit/push during implementation"
+
+  - id: wcg-003
+    workflow: coding-guard
+    description: "git push to main is blocked during push-pr"
+    initial_state:
+      session_id: session-cg-003
+      active_stage: push-pr
+      completed_stages:
+        - read-analyze
+        - create-branch
+        - baseline-verify
+        - implement
+        - local-verify
+        - external-review
+        - docs-update
+      approvals:
+        external-review: approved
+      evidence:
+        reads:
+          - TASK.md
+        stage_calls:
+          create-branch:
+            - git switch -c feat/017-p7-coding-guard-fixtures
+          baseline-verify:
+            - pytest
+          local-verify:
+            - pytest
+          external-review:
+            - git diff --stat
+    steps:
+      - id: push-main-during-push-pr
+        call:
+          tool: Bash
+          args:
+            command: git push origin main
+        execution: not_run
+        expect:
+          decision: deny
+          active_stage: push-pr
+          completed_stages:
+            - read-analyze
+            - create-branch
+            - baseline-verify
+            - implement
+            - local-verify
+            - external-review
+            - docs-update
+          approvals:
+            external-review: approved
+          evidence:
+            reads:
+              - TASK.md
+            stage_calls:
+              create-branch:
+                - git switch -c feat/017-p7-coding-guard-fixtures
+              baseline-verify:
+                - pytest
+              local-verify:
+                - pytest
+              external-review:
+                - git diff --stat
+          message_contains: "Push to a branch, not main"
+
+  - id: wcg-004
+    workflow: coding-guard
+    description: "external-review pauses until approval is granted"
+    initial_state:
+      session_id: session-cg-004
+      active_stage: external-review
+      completed_stages:
+        - read-analyze
+        - create-branch
+        - baseline-verify
+        - implement
+        - local-verify
+      approvals: {}
+      evidence:
+        reads:
+          - TASK.md
+        stage_calls:
+          create-branch:
+            - git switch -c feat/017-p7-coding-guard-fixtures
+          baseline-verify:
+            - pytest
+          local-verify:
+            - pytest
+    steps:
+      - id: review-diff
+        call:
+          tool: Bash
+          args:
+            command: git diff --stat
+        execution: success
+        expect:
+          decision: allow
+          active_stage: external-review
+          completed_stages:
+            - read-analyze
+            - create-branch
+            - baseline-verify
+            - implement
+            - local-verify
+          approvals: {}
+          evidence:
+            reads:
+              - TASK.md
+            stage_calls:
+              create-branch:
+                - git switch -c feat/017-p7-coding-guard-fixtures
+              baseline-verify:
+                - pytest
+              local-verify:
+                - pytest
+              external-review:
+                - git diff --stat
+
+      - id: attempt-docs-update-without-approval
+        call:
+          tool: Edit
+          args:
+            path: README.md
+        execution: not_run
+        expect:
+          decision: pause
+          active_stage: external-review
+          completed_stages:
+            - read-analyze
+            - create-branch
+            - baseline-verify
+            - implement
+            - local-verify
+          approvals: {}
+          evidence:
+            reads:
+              - TASK.md
+            stage_calls:
+              create-branch:
+                - git switch -c feat/017-p7-coding-guard-fixtures
+              baseline-verify:
+                - pytest
+              local-verify:
+                - pytest
+              external-review:
+                - git diff --stat
+          approval_requested_for: external-review
+          message_contains: "Approve only after external review confirms the implementation"
+
+  - id: wcg-005
+    workflow: coding-guard
+    description: "operator reset from external-review returns the workflow to implement"
+    initial_state:
+      session_id: session-cg-005
+      active_stage: external-review
+      completed_stages:
+        - read-analyze
+        - create-branch
+        - baseline-verify
+        - implement
+        - local-verify
+      approvals: {}
+      evidence:
+        reads:
+          - TASK.md
+        stage_calls:
+          create-branch:
+            - git switch -c feat/017-p7-coding-guard-fixtures
+          baseline-verify:
+            - pytest
+          local-verify:
+            - pytest
+          external-review:
+            - git diff --stat
+    steps:
+      - id: reset-to-implement-after-review-findings
+        reset_to: implement
+        expect:
+          active_stage: implement
+          completed_stages:
+            - read-analyze
+            - create-branch
+            - baseline-verify
+          approvals: {}
+          evidence:
+            reads:
+              - TASK.md
+            stage_calls:
+              create-branch:
+                - git switch -c feat/017-p7-coding-guard-fixtures
+              baseline-verify:
+                - pytest
+
+  - id: wcg-006
+    workflow: coding-guard
+    description: "operator reset from ci-green returns the workflow to implement"
+    initial_state:
+      session_id: session-cg-006
+      active_stage: ci-green
+      completed_stages:
+        - read-analyze
+        - create-branch
+        - baseline-verify
+        - implement
+        - local-verify
+        - external-review
+        - docs-update
+        - push-pr
+      approvals:
+        external-review: approved
+      evidence:
+        reads:
+          - TASK.md
+        stage_calls:
+          create-branch:
+            - git switch -c feat/017-p7-coding-guard-fixtures
+          baseline-verify:
+            - pytest
+          local-verify:
+            - pytest
+          external-review:
+            - git diff --stat
+          push-pr:
+            - git add fixtures/README.md
+            - 'git commit -m "feat: add coding-guard workflow fixtures"'
+            - git push origin feat/017-p7-coding-guard-fixtures
+    steps:
+      - id: reset-to-implement-after-ci-failure
+        reset_to: implement
+        expect:
+          active_stage: implement
+          completed_stages:
+            - read-analyze
+            - create-branch
+            - baseline-verify
+          approvals: {}
+          evidence:
+            reads:
+              - TASK.md
+            stage_calls:
+              create-branch:
+                - git switch -c feat/017-p7-coding-guard-fixtures
+              baseline-verify:
+                - pytest
