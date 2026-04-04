@@ -3,8 +3,13 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 from edictum_schemas import load_schema, schema_path
+
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+FIXTURES_DIR = REPO_ROOT / "fixtures"
 
 
 def test_schema_file_exists() -> None:
@@ -61,3 +66,19 @@ def test_matches_operator_description() -> None:
     matches_desc = schema["$defs"]["Operator"]["properties"]["matches"]["description"]
     assert "10,000" in matches_desc
     assert "Python" not in matches_desc
+
+
+def test_fixture_readme_lists_public_fixture_classes() -> None:
+    readme = (FIXTURES_DIR / "README.md").read_text(encoding="utf-8")
+    assert "behavioral/" in readme
+    assert "adversarial/" in readme
+    assert "rejection/" in readme
+    assert "workflow/" in readme
+    assert "workflow-adapter-conformance/" in readme
+
+
+def test_workflow_adapter_conformance_fixtures_are_discoverable() -> None:
+    adapter_dir = FIXTURES_DIR / "workflow-adapter-conformance"
+    assert adapter_dir.is_dir()
+    assert (adapter_dir / "README.md").is_file()
+    assert any(adapter_dir.glob("*.workflow-adapter.yaml"))

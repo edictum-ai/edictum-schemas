@@ -1,0 +1,908 @@
+suite: workflow-adapter-conformance-core
+version: 1
+description: "Spec 017 P6 workflow adapter audit, lineage, and recording cases"
+
+workflows:
+  dev-loop:
+    apiVersion: edictum/v1
+    kind: Workflow
+    metadata:
+      name: dev-loop
+      version: "2026-04-04"
+    stages:
+      - id: read-analyze
+        description: "Read the P6 reference before editing"
+        tools: [Read]
+        exit:
+          - condition: file_read("specs/017.md")
+            message: "Read specs/017.md before editing"
+
+      - id: implement
+        description: "Make the fixture changes"
+        entry:
+          - condition: stage_complete("read-analyze")
+        tools: [Edit]
+
+      - id: local-verify
+        description: "Run local verification"
+        entry:
+          - condition: stage_complete("implement")
+        tools: [Bash]
+        checks:
+          - command_matches: "^pytest$"
+            message: "Only pytest is allowed in local-verify"
+        exit:
+          - condition: command_matches("^pytest$")
+            message: "Run pytest successfully before local review"
+
+      - id: local-review
+        description: "Pause for approval"
+        entry:
+          - condition: stage_complete("local-verify")
+        approval:
+          message: "Approve after reviewing the diff and pytest output"
+
+      - id: commit-push
+        description: "Push the review-approved branch"
+        entry:
+          - condition: stage_complete("local-review")
+        tools: [Bash]
+        checks:
+          - command_matches: "^git push origin feat/017-p6-workflow-conformance-fixtures$"
+            message: "Only the review-approved branch push is allowed"
+
+  double-review-loop:
+    apiVersion: edictum/v1
+    kind: Workflow
+    metadata:
+      name: double-review-loop
+      version: "2026-04-04"
+    stages:
+      - id: local-review
+        description: "Pause for local review approval"
+        approval:
+          message: "Approve after local review"
+
+      - id: release-review
+        description: "Pause for release review approval"
+        entry:
+          - condition: stage_complete("local-review")
+        approval:
+          message: "Approve after release review"
+
+      - id: commit-push
+        description: "Push the release-approved branch"
+        entry:
+          - condition: stage_complete("release-review")
+        tools: [Bash]
+        checks:
+          - command_matches: "^git push origin feat/017-p6-workflow-conformance-fixtures$"
+            message: "Only the release-approved branch push is allowed"
+
+  context-coverage:
+    apiVersion: edictum/v1
+    kind: Workflow
+    metadata:
+      name: context-coverage
+      version: "2026-04-04"
+    stages:
+      - id: implement
+        description: "Stay in a single stage so event context is easy to compare"
+        tools: [Edit]
+        exit:
+          - condition: file_read("never.txt")
+            message: "This stage does not auto-advance during the fixture"
+
+fixtures:
+  - id: "wac-001"
+    workflow: dev-loop
+    description: "stage progression emits workflow-aware events across read-analyze, implement, and local-verify"
+    initial_state:
+      session_id: wf-stage-001
+      active_stage: read-analyze
+      completed_stages: []
+      approvals: {}
+      evidence:
+        reads: []
+        stage_calls: {}
+      blocked_reason: null
+      pending_approval:
+        required: false
+    steps:
+      - id: read-spec
+        call:
+          tool: Read
+          args:
+            path: specs/017.md
+        execution: success
+        expect:
+          decision: allow
+          active_stage: read-analyze
+          completed_stages: []
+          approvals: {}
+          evidence:
+            reads:
+              - specs/017.md
+            stage_calls: {}
+          blocked_reason: null
+          pending_approval:
+            required: false
+          audit_events:
+            - action: call_allowed
+              workflow:
+                name: dev-loop
+                version: "2026-04-04"
+                active_stage: read-analyze
+                completed_stages: []
+                blocked_reason: null
+                pending_approval:
+                  required: false
+            - action: call_executed
+              workflow:
+                name: dev-loop
+                version: "2026-04-04"
+                active_stage: read-analyze
+                completed_stages: []
+                blocked_reason: null
+                pending_approval:
+                  required: false
+
+      - id: edit-fixture
+        call:
+          tool: Edit
+          args:
+            path: fixtures/README.md
+        execution: success
+        expect:
+          decision: allow
+          active_stage: implement
+          completed_stages:
+            - read-analyze
+          approvals: {}
+          evidence:
+            reads:
+              - specs/017.md
+            stage_calls: {}
+          blocked_reason: null
+          pending_approval:
+            required: false
+          audit_events:
+            - action: workflow_stage_advanced
+              workflow:
+                name: dev-loop
+                version: "2026-04-04"
+                stage_id: read-analyze
+                to_stage_id: implement
+                active_stage: implement
+                completed_stages:
+                  - read-analyze
+                blocked_reason: null
+                pending_approval:
+                  required: false
+            - action: call_allowed
+              workflow:
+                name: dev-loop
+                version: "2026-04-04"
+                active_stage: implement
+                completed_stages:
+                  - read-analyze
+                blocked_reason: null
+                pending_approval:
+                  required: false
+            - action: call_executed
+              workflow:
+                name: dev-loop
+                version: "2026-04-04"
+                active_stage: implement
+                completed_stages:
+                  - read-analyze
+                blocked_reason: null
+                pending_approval:
+                  required: false
+
+      - id: run-pytest
+        call:
+          tool: Bash
+          args:
+            command: pytest
+        execution: success
+        expect:
+          decision: allow
+          active_stage: local-verify
+          completed_stages:
+            - read-analyze
+            - implement
+          approvals: {}
+          evidence:
+            reads:
+              - specs/017.md
+            stage_calls:
+              local-verify:
+                - pytest
+          blocked_reason: null
+          pending_approval:
+            required: false
+          audit_events:
+            - action: workflow_stage_advanced
+              workflow:
+                name: dev-loop
+                version: "2026-04-04"
+                stage_id: implement
+                to_stage_id: local-verify
+                active_stage: local-verify
+                completed_stages:
+                  - read-analyze
+                  - implement
+                blocked_reason: null
+                pending_approval:
+                  required: false
+            - action: call_allowed
+              workflow:
+                name: dev-loop
+                version: "2026-04-04"
+                active_stage: local-verify
+                completed_stages:
+                  - read-analyze
+                  - implement
+                blocked_reason: null
+                pending_approval:
+                  required: false
+            - action: call_executed
+              workflow:
+                name: dev-loop
+                version: "2026-04-04"
+                active_stage: local-verify
+                completed_stages:
+                  - read-analyze
+                  - implement
+                blocked_reason: null
+                pending_approval:
+                  required: false
+
+  - id: "wac-002"
+    workflow: dev-loop
+    description: "approval gating requests approval, advances, and then executes the allowed call"
+    initial_state:
+      session_id: wf-approval-001
+      active_stage: local-review
+      completed_stages:
+        - read-analyze
+        - implement
+        - local-verify
+      approvals: {}
+      evidence:
+        reads:
+          - specs/017.md
+        stage_calls:
+          local-verify:
+            - pytest
+      blocked_reason: null
+      pending_approval:
+        required: false
+    steps:
+      - id: push-after-approval
+        call:
+          tool: Bash
+          args:
+            command: git push origin feat/017-p6-workflow-conformance-fixtures
+        approval_outcomes:
+          - approved
+        execution: success
+        expect:
+          decision: allow
+          active_stage: commit-push
+          completed_stages:
+            - read-analyze
+            - implement
+            - local-verify
+            - local-review
+          approvals:
+            local-review: approved
+          evidence:
+            reads:
+              - specs/017.md
+            stage_calls:
+              local-verify:
+                - pytest
+              commit-push:
+                - git push origin feat/017-p6-workflow-conformance-fixtures
+          blocked_reason: null
+          pending_approval:
+            required: false
+          audit_events:
+            - action: call_asked
+              workflow:
+                name: dev-loop
+                version: "2026-04-04"
+                active_stage: local-review
+                completed_stages:
+                  - read-analyze
+                  - implement
+                  - local-verify
+                blocked_reason: null
+                pending_approval:
+                  required: true
+                  stage_id: local-review
+                  message: "Approve after reviewing the diff and pytest output"
+            - action: call_approval_granted
+              workflow:
+                name: dev-loop
+                version: "2026-04-04"
+                active_stage: local-review
+                completed_stages:
+                  - read-analyze
+                  - implement
+                  - local-verify
+                blocked_reason: null
+                pending_approval:
+                  required: true
+                  stage_id: local-review
+                  message: "Approve after reviewing the diff and pytest output"
+            - action: workflow_stage_advanced
+              workflow:
+                name: dev-loop
+                version: "2026-04-04"
+                stage_id: local-review
+                to_stage_id: commit-push
+                active_stage: commit-push
+                completed_stages:
+                  - read-analyze
+                  - implement
+                  - local-verify
+                  - local-review
+                blocked_reason: null
+                pending_approval:
+                  required: false
+            - action: call_allowed
+              workflow:
+                name: dev-loop
+                version: "2026-04-04"
+                active_stage: commit-push
+                completed_stages:
+                  - read-analyze
+                  - implement
+                  - local-verify
+                  - local-review
+                blocked_reason: null
+                pending_approval:
+                  required: false
+            - action: call_executed
+              workflow:
+                name: dev-loop
+                version: "2026-04-04"
+                active_stage: commit-push
+                completed_stages:
+                  - read-analyze
+                  - implement
+                  - local-verify
+                  - local-review
+                blocked_reason: null
+                pending_approval:
+                  required: false
+
+  - id: "wac-003"
+    workflow: double-review-loop
+    description: "multi-round approval keeps asking until the call reaches a non-approval stage"
+    initial_state:
+      session_id: wf-approval-002
+      active_stage: local-review
+      completed_stages: []
+      approvals: {}
+      evidence:
+        reads: []
+        stage_calls: {}
+      blocked_reason: null
+      pending_approval:
+        required: false
+    steps:
+      - id: push-after-two-approvals
+        call:
+          tool: Bash
+          args:
+            command: git push origin feat/017-p6-workflow-conformance-fixtures
+        approval_outcomes:
+          - approved
+          - approved
+        execution: success
+        expect:
+          decision: allow
+          active_stage: commit-push
+          completed_stages:
+            - local-review
+            - release-review
+          approvals:
+            local-review: approved
+            release-review: approved
+          evidence:
+            reads: []
+            stage_calls:
+              commit-push:
+                - git push origin feat/017-p6-workflow-conformance-fixtures
+          blocked_reason: null
+          pending_approval:
+            required: false
+          audit_events:
+            - action: call_asked
+              workflow:
+                name: double-review-loop
+                version: "2026-04-04"
+                active_stage: local-review
+                completed_stages: []
+                blocked_reason: null
+                pending_approval:
+                  required: true
+                  stage_id: local-review
+                  message: "Approve after local review"
+            - action: call_approval_granted
+              workflow:
+                name: double-review-loop
+                version: "2026-04-04"
+                active_stage: local-review
+                completed_stages: []
+                blocked_reason: null
+                pending_approval:
+                  required: true
+                  stage_id: local-review
+                  message: "Approve after local review"
+            - action: workflow_stage_advanced
+              workflow:
+                name: double-review-loop
+                version: "2026-04-04"
+                stage_id: local-review
+                to_stage_id: release-review
+                active_stage: release-review
+                completed_stages:
+                  - local-review
+                blocked_reason: null
+                pending_approval:
+                  required: true
+                  stage_id: release-review
+                  message: "Approve after release review"
+            - action: call_asked
+              workflow:
+                name: double-review-loop
+                version: "2026-04-04"
+                active_stage: release-review
+                completed_stages:
+                  - local-review
+                blocked_reason: null
+                pending_approval:
+                  required: true
+                  stage_id: release-review
+                  message: "Approve after release review"
+            - action: call_approval_granted
+              workflow:
+                name: double-review-loop
+                version: "2026-04-04"
+                active_stage: release-review
+                completed_stages:
+                  - local-review
+                blocked_reason: null
+                pending_approval:
+                  required: true
+                  stage_id: release-review
+                  message: "Approve after release review"
+            - action: workflow_stage_advanced
+              workflow:
+                name: double-review-loop
+                version: "2026-04-04"
+                stage_id: release-review
+                to_stage_id: commit-push
+                active_stage: commit-push
+                completed_stages:
+                  - local-review
+                  - release-review
+                blocked_reason: null
+                pending_approval:
+                  required: false
+            - action: call_allowed
+              workflow:
+                name: double-review-loop
+                version: "2026-04-04"
+                active_stage: commit-push
+                completed_stages:
+                  - local-review
+                  - release-review
+                blocked_reason: null
+                pending_approval:
+                  required: false
+            - action: call_executed
+              workflow:
+                name: double-review-loop
+                version: "2026-04-04"
+                active_stage: commit-push
+                completed_stages:
+                  - local-review
+                  - release-review
+                blocked_reason: null
+                pending_approval:
+                  required: false
+
+  - id: "wac-004"
+    workflow: dev-loop
+    description: "blocked action records the workflow blocked reason on the audit event"
+    initial_state:
+      session_id: wf-blocked-001
+      active_stage: commit-push
+      completed_stages:
+        - read-analyze
+        - implement
+        - local-verify
+        - local-review
+      approvals:
+        local-review: approved
+      evidence:
+        reads:
+          - specs/017.md
+        stage_calls:
+          local-verify:
+            - pytest
+      blocked_reason: null
+      pending_approval:
+        required: false
+    steps:
+      - id: push-main
+        call:
+          tool: Bash
+          args:
+            command: git push origin main
+        execution: not_run
+        expect:
+          decision: block
+          active_stage: commit-push
+          completed_stages:
+            - read-analyze
+            - implement
+            - local-verify
+            - local-review
+          approvals:
+            local-review: approved
+          evidence:
+            reads:
+              - specs/017.md
+            stage_calls:
+              local-verify:
+                - pytest
+          blocked_reason: "Only the review-approved branch push is allowed"
+          pending_approval:
+            required: false
+          audit_events:
+            - action: call_blocked
+              workflow:
+                name: dev-loop
+                version: "2026-04-04"
+                active_stage: commit-push
+                completed_stages:
+                  - read-analyze
+                  - implement
+                  - local-verify
+                  - local-review
+                blocked_reason: "Only the review-approved branch push is allowed"
+                pending_approval:
+                  required: false
+                last_blocked_action:
+                  tool: Bash
+                  summary: "git push origin main"
+                  message: "Only the review-approved branch push is allowed"
+
+  - id: "wac-005"
+    workflow: dev-loop
+    description: "session lineage fields appear on audit events when parent_session_id is supplied"
+    lineage:
+      parent_session_id: parent-session-001
+    initial_state:
+      session_id: wf-lineage-001
+      active_stage: read-analyze
+      completed_stages: []
+      approvals: {}
+      evidence:
+        reads: []
+        stage_calls: {}
+      blocked_reason: null
+      pending_approval:
+        required: false
+    steps:
+      - id: read-with-lineage
+        call:
+          tool: Read
+          args:
+            path: specs/017.md
+        execution: success
+        expect:
+          decision: allow
+          active_stage: read-analyze
+          completed_stages: []
+          approvals: {}
+          evidence:
+            reads:
+              - specs/017.md
+            stage_calls: {}
+          blocked_reason: null
+          pending_approval:
+            required: false
+          audit_events:
+            - action: call_allowed
+              session_id: wf-lineage-001
+              parent_session_id: parent-session-001
+              workflow:
+                name: dev-loop
+                version: "2026-04-04"
+                active_stage: read-analyze
+                completed_stages: []
+                blocked_reason: null
+                pending_approval:
+                  required: false
+            - action: call_executed
+              session_id: wf-lineage-001
+              parent_session_id: parent-session-001
+              workflow:
+                name: dev-loop
+                version: "2026-04-04"
+                active_stage: read-analyze
+                completed_stages: []
+                blocked_reason: null
+                pending_approval:
+                  required: false
+
+  - id: "wac-006"
+    workflow: context-coverage
+    description: "workflow context is present on blocked, allowed, executed, and failed events"
+    initial_state:
+      session_id: wf-context-001
+      active_stage: implement
+      completed_stages: []
+      approvals: {}
+      evidence:
+        reads: []
+        stage_calls: {}
+      blocked_reason: null
+      pending_approval:
+        required: false
+    steps:
+      - id: blocked-bash
+        call:
+          tool: Bash
+          args:
+            command: pytest
+        execution: not_run
+        expect:
+          decision: block
+          active_stage: implement
+          completed_stages: []
+          approvals: {}
+          evidence:
+            reads: []
+            stage_calls: {}
+          blocked_reason: "Tool is not allowed in this workflow stage"
+          pending_approval:
+            required: false
+          audit_events:
+            - action: call_blocked
+              workflow:
+                name: context-coverage
+                version: "2026-04-04"
+                active_stage: implement
+                completed_stages: []
+                blocked_reason: "Tool is not allowed in this workflow stage"
+                pending_approval:
+                  required: false
+
+      - id: successful-edit
+        call:
+          tool: Edit
+          args:
+            path: fixtures/workflow-adapter-conformance/core.workflow-adapter.yaml
+        execution: success
+        expect:
+          decision: allow
+          active_stage: implement
+          completed_stages: []
+          approvals: {}
+          evidence:
+            reads: []
+            stage_calls: {}
+          blocked_reason: null
+          pending_approval:
+            required: false
+          audit_events:
+            - action: call_allowed
+              workflow:
+                name: context-coverage
+                version: "2026-04-04"
+                active_stage: implement
+                completed_stages: []
+                blocked_reason: null
+                pending_approval:
+                  required: false
+            - action: call_executed
+              workflow:
+                name: context-coverage
+                version: "2026-04-04"
+                active_stage: implement
+                completed_stages: []
+                blocked_reason: null
+                pending_approval:
+                  required: false
+
+      - id: failed-edit
+        call:
+          tool: Edit
+          args:
+            path: fixtures/workflow-adapter-conformance/core.workflow-adapter.yaml
+        execution: error
+        expect:
+          decision: allow
+          active_stage: implement
+          completed_stages: []
+          approvals: {}
+          evidence:
+            reads: []
+            stage_calls: {}
+          blocked_reason: null
+          pending_approval:
+            required: false
+          audit_events:
+            - action: call_allowed
+              workflow:
+                name: context-coverage
+                version: "2026-04-04"
+                active_stage: implement
+                completed_stages: []
+                blocked_reason: null
+                pending_approval:
+                  required: false
+            - action: call_failed
+              workflow:
+                name: context-coverage
+                version: "2026-04-04"
+                active_stage: implement
+                completed_stages: []
+                blocked_reason: null
+                pending_approval:
+                  required: false
+
+  - id: "wac-007"
+    workflow: dev-loop
+    description: "post-execution recording only happens after success and affects the next stage evaluation"
+    initial_state:
+      session_id: wf-recording-001
+      active_stage: read-analyze
+      completed_stages: []
+      approvals: {}
+      evidence:
+        reads: []
+        stage_calls: {}
+      blocked_reason: null
+      pending_approval:
+        required: false
+    steps:
+      - id: read-fails
+        call:
+          tool: Read
+          args:
+            path: specs/017.md
+        execution: error
+        expect:
+          decision: allow
+          active_stage: read-analyze
+          completed_stages: []
+          approvals: {}
+          evidence:
+            reads: []
+            stage_calls: {}
+          blocked_reason: null
+          pending_approval:
+            required: false
+          audit_events:
+            - action: call_allowed
+              workflow:
+                name: dev-loop
+                version: "2026-04-04"
+                active_stage: read-analyze
+                completed_stages: []
+                blocked_reason: null
+                pending_approval:
+                  required: false
+            - action: call_failed
+              workflow:
+                name: dev-loop
+                version: "2026-04-04"
+                active_stage: read-analyze
+                completed_stages: []
+                blocked_reason: null
+                pending_approval:
+                  required: false
+
+      - id: read-succeeds
+        call:
+          tool: Read
+          args:
+            path: specs/017.md
+        execution: success
+        expect:
+          decision: allow
+          active_stage: read-analyze
+          completed_stages: []
+          approvals: {}
+          evidence:
+            reads:
+              - specs/017.md
+            stage_calls: {}
+          blocked_reason: null
+          pending_approval:
+            required: false
+          audit_events:
+            - action: call_allowed
+              workflow:
+                name: dev-loop
+                version: "2026-04-04"
+                active_stage: read-analyze
+                completed_stages: []
+                blocked_reason: null
+                pending_approval:
+                  required: false
+            - action: call_executed
+              workflow:
+                name: dev-loop
+                version: "2026-04-04"
+                active_stage: read-analyze
+                completed_stages: []
+                blocked_reason: null
+                pending_approval:
+                  required: false
+                last_recorded_evidence:
+                  tool: Read
+                  summary: specs/017.md
+
+      - id: edit-after-recording
+        call:
+          tool: Edit
+          args:
+            path: fixtures/workflow-adapter-conformance/core.workflow-adapter.yaml
+        execution: success
+        expect:
+          decision: allow
+          active_stage: implement
+          completed_stages:
+            - read-analyze
+          approvals: {}
+          evidence:
+            reads:
+              - specs/017.md
+            stage_calls: {}
+          blocked_reason: null
+          pending_approval:
+            required: false
+          audit_events:
+            - action: workflow_stage_advanced
+              workflow:
+                name: dev-loop
+                version: "2026-04-04"
+                stage_id: read-analyze
+                to_stage_id: implement
+                active_stage: implement
+                completed_stages:
+                  - read-analyze
+                blocked_reason: null
+                pending_approval:
+                  required: false
+            - action: call_allowed
+              workflow:
+                name: dev-loop
+                version: "2026-04-04"
+                active_stage: implement
+                completed_stages:
+                  - read-analyze
+                blocked_reason: null
+                pending_approval:
+                  required: false
+            - action: call_executed
+              workflow:
+                name: dev-loop
+                version: "2026-04-04"
+                active_stage: implement
+                completed_stages:
+                  - read-analyze
+                blocked_reason: null
+                pending_approval:
+                  required: false
