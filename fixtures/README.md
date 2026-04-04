@@ -1,11 +1,33 @@
 # Edictum Shared Test Fixtures
 
-Cross-language behavioral and adversarial test specs for `edictum/v1` rule evaluation.
-Every language implementation (Python, TypeScript, Go) **must** pass all fixtures in this directory.
+Cross-language shared fixtures for `edictum/v1` ruleset evaluation and workflow
+conformance.
 
-## Fixture Format
+Every language implementation (Python, TypeScript, Go) should discover and run
+the fixture classes that apply to its runtime surface.
 
-Each `.fixtures.yaml` or `.adversarial.yaml` file follows this structure:
+## Directory Layout
+
+- `behavioral/`: shared ruleset evaluation cases
+- `adversarial/`: hostile input cases that must not bypass enforcement
+- `rejection/`: malformed rulesets that loaders must reject
+- `workflow/`: Spec 008 workflow runtime cases
+- `workflow-adapter-conformance/`: Spec 017 P6 adapter audit and lineage cases
+
+## Ruleset Evaluation Fixtures
+
+The ruleset-evaluation suites use the established file classes:
+
+- `*.fixtures.yaml`
+- `*.adversarial.yaml`
+- `*.rejection.yaml`
+
+These suites keep their existing wire-format field names for compatibility.
+That means some literal keys still use older names such as `contract`,
+`bundle`, and `expected.verdict: denied`. Treat those as stable fixture keys,
+not preferred prose.
+
+Each `*.fixtures.yaml` or `*.adversarial.yaml` file follows this structure:
 
 ```yaml
 suite: <suite-name>          # Unique suite identifier
@@ -16,7 +38,7 @@ fixtures:
   - id: "<suite>-NNN"        # Unique fixture ID
     description: "..."       # What this single case tests
 
-    contract:                 # A valid edictum/v1 Ruleset
+    contract:                 # Existing field name; contains a valid Ruleset
       apiVersion: edictum/v1
       kind: Ruleset
       metadata:
@@ -24,7 +46,7 @@ fixtures:
       defaults:
         mode: enforce
       rules:
-        - ...                 # One or more rules
+        - ...
 
     envelope:                 # The tool call being evaluated
       tool_name: "ToolName"
@@ -33,94 +55,54 @@ fixtures:
 
     # For session fixtures, supply session state instead of envelope:
     session:
-      tool_calls: 5           # Current call count
-      per_tool:               # Optional per-tool counts
+      tool_calls: 5
+      per_tool:
         Bash: 3
 
     expected:
       verdict: allowed | denied | warned | redacted | error
-      message_contains: "..."     # Optional: substring in verdict message
-      audit_action: "..."         # Optional: expected audit action tag
+      message_contains: "..."     # Optional stable substring
+      audit_action: "..."         # Optional expected audit action tag
 ```
 
-## Fields
+## Ruleset Evaluation Fields
 
-| Field              | Required | Description                                                |
-| ------------------ | -------- | ---------------------------------------------------------- |
-| `contract`         | yes      | Full `Ruleset` — must validate against the schema   |
-| `envelope`         | varies   | Tool call envelope; required for pre/post/sandbox fixtures |
-| `session`          | varies   | Session state; required for session fixtures                |
-| `result`           | varies   | Tool result; required for postcondition fixtures           |
-| `expected.verdict` | yes      | The expected evaluation outcome                            |
+| Field              | Required | Description                                           |
+| ------------------ | -------- | ----------------------------------------------------- |
+| `contract`         | yes      | Existing field name for the schema-valid `Ruleset`    |
+| `envelope`         | varies   | Tool call input for pre/post/sandbox fixtures         |
+| `session`          | varies   | Session counters for session-limit fixtures           |
+| `result`           | varies   | Tool result for post-rule fixtures                    |
+| `expected.verdict` | yes      | Expected outcome for the fixture                      |
 
-## Verdicts
+## Ruleset Evaluation Verdicts
 
-| Verdict    | Meaning                                            |
-| ---------- | -------------------------------------------------- |
-| `allowed`  | Tool call passes all rules                     |
-| `denied`   | Tool call blocked by a rule                    |
-| `warned`   | Postcondition matched with `warn` action           |
-| `redacted` | Postcondition matched with `redact` action         |
-| `error`    | Evaluation itself failed (malformed input, etc.)   |
+| Verdict    | Meaning                                                    |
+| ---------- | ---------------------------------------------------------- |
+| `allowed`  | Tool call passes the evaluated rules                       |
+| `denied`   | Legacy fixture value meaning the call was blocked          |
+| `warned`   | Post-rule matched with `action: warn`                      |
+| `redacted` | Post-rule matched with `action: redact`                    |
+| `error`    | Evaluation failed because the input was malformed          |
 
-## How Each Language Runs These
+## Workflow Fixtures
 
-Each implementation should:
+Workflow runtime fixtures live under [`workflow/`](workflow/README.md) and use a
+dedicated format for stage progression, approval gating, and evidence updates.
 
-1. **Discover** all `*.fixtures.yaml` and `*.adversarial.yaml` files under `fixtures/`.
-2. **Parse** each file and iterate over the `fixtures` array.
-3. **Load** the `contract` field as a `Ruleset`.
-4. **Evaluate** the ruleset against the `envelope` (and `result`/`session` where applicable).
-5. **Assert** that the actual verdict matches `expected.verdict`.
-6. **Assert** that `expected.message_contains` (if present) is a substring of the verdict message.
-7. **Assert** that `expected.audit_action` (if present) matches the audit trail action.
-8. **Assert** that `expected.tags` (if present) are all present in the verdict tags.
+## Workflow Adapter Conformance Fixtures
 
-### Python
+Workflow adapter conformance fixtures live under
+[`workflow-adapter-conformance/`](workflow-adapter-conformance/README.md).
+They extend the workflow fixture model with approval loop inputs, session
+lineage, and ordered audit-event expectations for Spec 017 P6.
 
-```python
-import yaml, glob, pytest
+## Shared Contract
 
-@pytest.mark.parametrize("fixture", load_all_fixtures())
-def test_fixture(fixture):
-    ruleset = load_bundle(fixture["contract"])
-    verdict = evaluate(ruleset, fixture["envelope"])
-    assert verdict.status == fixture["expected"]["verdict"]
-```
-
-### TypeScript
-
-```typescript
-import { describe, it, expect } from "vitest";
-import { loadFixtures } from "./helpers";
-
-for (const f of loadFixtures()) {
-  it(f.id, () => {
-    const ruleset = loadBundle(f.contract);
-    const verdict = evaluate(ruleset, f.envelope);
-    expect(verdict.status).toBe(f.expected.verdict);
-  });
-}
-```
-
-### Go
-
-```go
-func TestFixtures(t *testing.T) {
-    for _, f := range loadFixtures(t) {
-        t.Run(f.ID, func(t *testing.T) {
-            ruleset := loadBundle(t, f.Contract)
-            verdict := evaluate(ruleset, f.Envelope)
-            assert.Equal(t, f.Expected.Verdict, verdict.Status)
-        })
-    }
-}
-```
-
-## Contract Between Fixture and Implementation
-
-1. **Fixtures are authoritative** — if a fixture says the verdict is `denied`, your implementation must produce `denied`. A failing fixture is a bug in the implementation, not the fixture.
-2. **Fixtures are minimal** — each tests exactly ONE behavior. Do not infer additional behaviors.
-3. **Contracts in fixtures are schema-valid** — every `contract` block validates against `schemas/edictum-v1.schema.json`.
-4. **Adversarial fixtures test security boundaries** — implementations MUST handle malicious input safely (no crashes, no bypasses).
-5. **New fixtures require all implementations to update** — adding a fixture is a cross-repo contract change.
+1. Fixtures are authoritative. If a fixture says a call is blocked, paused, or
+   allowed, the implementation should match it.
+2. Fixtures are minimal. Each case should cover one behavior.
+3. Rulesets embedded in fixtures should stay schema-valid.
+4. Workflow fixtures should assert stable public behavior, not SDK-internal
+   helper structure.
+5. Adding or changing fixtures is a cross-repo contract change for the SDKs.
