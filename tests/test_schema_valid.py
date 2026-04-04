@@ -5,6 +5,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from edictum_schemas import load_schema, schema_path
 
 
@@ -75,6 +77,7 @@ def test_fixture_readme_lists_public_fixture_classes() -> None:
     assert "rejection/" in readme
     assert "workflow/" in readme
     assert "workflow-adapter-conformance/" in readme
+    assert "workflow-coding-guard/" in readme
 
 
 def test_workflow_adapter_conformance_fixtures_are_discoverable() -> None:
@@ -82,3 +85,60 @@ def test_workflow_adapter_conformance_fixtures_are_discoverable() -> None:
     assert adapter_dir.is_dir()
     assert (adapter_dir / "README.md").is_file()
     assert any(adapter_dir.glob("*.workflow-adapter.yaml"))
+
+
+def test_workflow_coding_guard_fixtures_are_discoverable() -> None:
+    coding_guard_dir = FIXTURES_DIR / "workflow-coding-guard"
+    assert coding_guard_dir.is_dir()
+    assert (coding_guard_dir / "README.md").is_file()
+    assert any(coding_guard_dir.glob("*.workflow-coding-guard.yaml"))
+
+
+def test_workflow_coding_guard_fixture_suite_shape() -> None:
+    yaml = pytest.importorskip("yaml")
+
+    suite_path = (
+        FIXTURES_DIR / "workflow-coding-guard" / "core.workflow-coding-guard.yaml"
+    )
+    parsed = yaml.safe_load(suite_path.read_text(encoding="utf-8"))
+
+    assert parsed["suite"] == "workflow-coding-guard-core"
+    assert parsed["version"] == 1
+    assert list(parsed["workflows"]) == ["coding-guard"]
+
+    workflow = parsed["workflows"]["coding-guard"]
+    assert workflow["kind"] == "Workflow"
+    assert [stage["id"] for stage in workflow["stages"]] == [
+        "read-analyze",
+        "create-branch",
+        "baseline-verify",
+        "implement",
+        "local-verify",
+        "external-review",
+        "docs-update",
+        "push-pr",
+        "ci-green",
+        "done",
+    ]
+
+    fixtures = parsed["fixtures"]
+    assert [fixture["id"] for fixture in fixtures] == [
+        "wcg-001",
+        "wcg-002",
+        "wcg-003",
+        "wcg-004",
+        "wcg-005",
+        "wcg-006",
+    ]
+
+    happy_path = fixtures[0]
+    assert happy_path["steps"][-1]["expect"]["active_stage"] == "done"
+    assert happy_path["steps"][6]["approval_outcomes"] == ["approved"]
+
+    reset_targets = [
+        step["reset_to"]
+        for fixture in fixtures
+        for step in fixture["steps"]
+        if "reset_to" in step
+    ]
+    assert reset_targets == ["implement", "implement"]

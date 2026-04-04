@@ -13,6 +13,7 @@ the fixture classes that apply to its runtime surface.
 - `rejection/`: malformed rulesets that loaders must reject
 - `workflow/`: Spec 008 workflow runtime cases
 - `workflow-adapter-conformance/`: Spec 017 P6 adapter audit and lineage cases
+- `workflow-coding-guard/`: Spec 017 P7 coding-guard workflow cases
 
 ## Ruleset Evaluation Fixtures
 
@@ -96,6 +97,13 @@ Workflow adapter conformance fixtures live under
 [`workflow-adapter-conformance/`](workflow-adapter-conformance/README.md).
 They extend the workflow fixture model with approval loop inputs, session
 lineage, and ordered audit-event expectations for Spec 017 P6.
+
+## Workflow Coding-Guard Fixtures
+
+Workflow-specific coding-guard fixtures live under
+[`workflow-coding-guard/`](workflow-coding-guard/README.md).
+They reuse the workflow fixture state model and add approval loop inputs plus
+operator reset steps for Spec 017 P7.
 
 ## Shared Contract
 

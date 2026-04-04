@@ -18,9 +18,14 @@ The schema defines the structure for Edictum YAML rulesets (`edictum/v1` `Rulese
 
 ## Conformance Fixtures
 
-Shared workflow gate fixtures for Spec 008 live under [`fixtures/workflow/`](fixtures/workflow/README.md).
+Shared workflow gate fixtures for Spec 008 live under
+[`fixtures/workflow/`](fixtures/workflow/README.md).
 
-They define implementation-agnostic stage progression, approval, and evidence cases so each SDK can validate the same runtime semantics.
+Workflow-specific `coding-guard` fixtures for Spec 017 P7 live under
+[`fixtures/workflow-coding-guard/`](fixtures/workflow-coding-guard/README.md).
+
+These suites define implementation-agnostic stage progression, approval,
+evidence, and reset cases so each SDK can validate the same runtime semantics.
 
 ## Install
 
