@@ -87,6 +87,69 @@ def test_workflow_adapter_conformance_fixtures_are_discoverable() -> None:
     assert any(adapter_dir.glob("*.workflow-adapter.yaml"))
 
 
+def test_workflow_core_fixture_suite_shape() -> None:
+    yaml = pytest.importorskip("yaml")
+
+    suite_path = FIXTURES_DIR / "workflow" / "core.workflow.yaml"
+    parsed = yaml.safe_load(suite_path.read_text(encoding="utf-8"))
+
+    assert parsed["suite"] == "workflow-core"
+    assert parsed["version"] == 1
+
+    fixtures = {fixture["id"]: fixture for fixture in parsed["fixtures"]}
+    no_exit_regression = fixtures["wf-009"]
+
+    assert [step["id"] for step in no_exit_regression["steps"]] == [
+        "edit-stays-in-implement",
+        "verify-advances-to-local-verify",
+    ]
+    assert no_exit_regression["steps"][0]["call"]["tool"] == "Edit"
+    assert no_exit_regression["steps"][0]["expect"]["active_stage"] == "implement"
+    assert no_exit_regression["steps"][1]["call"]["tool"] == "Bash"
+    assert no_exit_regression["steps"][1]["expect"]["active_stage"] == "local-verify"
+    assert no_exit_regression["steps"][1]["expect"]["evidence"]["stage_calls"] == {
+        "local-verify": ["npm test"]
+    }
+
+
+def test_workflow_adapter_conformance_fixture_suite_shape() -> None:
+    yaml = pytest.importorskip("yaml")
+
+    suite_path = (
+        FIXTURES_DIR / "workflow-adapter-conformance" / "core.workflow-adapter.yaml"
+    )
+    parsed = yaml.safe_load(suite_path.read_text(encoding="utf-8"))
+
+    assert parsed["suite"] == "workflow-adapter-conformance-core"
+    assert parsed["version"] == 2
+
+    fixtures = {fixture["id"]: fixture for fixture in parsed["fixtures"]}
+    set_stage_regression = fixtures["wac-008"]
+    step = set_stage_regression["steps"][0]
+
+    assert step["set_stage_to"] == "local-review"
+    assert "call" not in step
+    assert "execution" not in step
+    assert "decision" not in step["expect"]
+
+    expected_pending = {
+        "required": True,
+        "stage_id": "local-review",
+        "message": "Approve after reviewing the diff and pytest output",
+    }
+    assert step["expect"]["pending_approval"] == expected_pending
+
+    event = step["expect"]["audit_events"][0]
+    assert event["action"] == "workflow_state_updated"
+    assert event["workflow"]["active_stage"] == "local-review"
+    assert event["workflow"]["completed_stages"] == [
+        "read-analyze",
+        "implement",
+        "local-verify",
+    ]
+    assert event["workflow"]["pending_approval"] == expected_pending
+
+
 def test_workflow_coding_guard_fixtures_are_discoverable() -> None:
     coding_guard_dir = FIXTURES_DIR / "workflow-coding-guard"
     assert coding_guard_dir.is_dir()

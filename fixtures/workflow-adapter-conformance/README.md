@@ -5,7 +5,8 @@ P6.
 
 They extend the base workflow fixture model in
 [`../workflow/README.md`](../workflow/README.md) with approval loop inputs,
-session lineage, and ordered audit-event expectations.
+non-tool stage-move operations, session lineage, and ordered audit-event
+expectations.
 
 ## File Class
 
@@ -28,9 +29,10 @@ Each fixture case contains:
 - `id`: stable case identifier
 - `workflow`: key from `workflows`
 - `description`: short human summary
-- `initial_state`: workflow state before any intercepted call runs
+- `initial_state`: workflow state before any step runs
 - `lineage`: optional event-lineage inputs such as `parent_session_id`
-- `steps`: ordered intercepted calls for the adapter under test
+- `steps`: ordered intercepted calls and `set_stage_to` operations for the
+  adapter under test
 
 `initial_state` extends the workflow runtime state with the stable snapshot
 fields needed for adapter audit assertions:
@@ -58,7 +60,7 @@ fields are intentionally omitted from the YAML because they are runtime values.
 
 ## Step Format
 
-Each step reuses the base workflow fields and adds adapter inputs:
+Call steps reuse the base workflow fields and add adapter inputs:
 
 ```yaml
 - id: push-after-approval
@@ -107,6 +109,39 @@ Field meanings:
 - `execution`: post-decision execution outcome
 - `expect`: expected decision, persisted workflow state, and audit events
 
+Set-stage steps model non-destructive stage movement exposed as `setStage`,
+`SetStage`, or `set_stage` by the SDKs:
+
+```yaml
+- id: set-stage-to-local-review
+  set_stage_to: local-review
+  expect:
+    active_stage: local-review
+    completed_stages: [read-analyze, implement, local-verify]
+    approvals: {}
+    evidence:
+      reads: []
+      stage_calls: {}
+    blocked_reason: null
+    pending_approval:
+      required: true
+      stage_id: local-review
+      message: Approve after reviewing the diff and pytest output
+    audit_events:
+      - action: workflow_state_updated
+        workflow:
+          active_stage: local-review
+          pending_approval:
+            required: true
+            stage_id: local-review
+            message: Approve after reviewing the diff and pytest output
+```
+
+Field meanings:
+
+- `set_stage_to`: named stage for non-destructive stage movement; these steps
+  omit `call`, `approval_outcomes`, `execution`, and `expect.decision`
+
 Supported `approval_outcomes` values in this fixture class:
 
 - `approved`
@@ -123,6 +158,17 @@ Supported `expect.decision` values:
 - `allow`
 - `block`
 - `pause`
+
+## Set-Stage Semantics
+
+`set_stage_to` follows the shared set-stage model:
+
+- the named stage becomes `active_stage`
+- `completed_stages` becomes every stage before the target stage
+- approvals and evidence are preserved
+- `blocked_reason` and `last_blocked_action` are cleared
+- `pending_approval` is recomputed immediately for the target stage
+- the public event sequence is a single `workflow_state_updated`
 
 ## Audit Event Expectations
 
@@ -154,6 +200,7 @@ These fixtures assert public adapter behavior only:
 - workflow stage progression
 - approval gating
 - multi-round approval loops
+- non-tool stage moves that emit `workflow_state_updated`
 - blocked calls with workflow context
 - session lineage on audit events
 - workflow context on allowed, blocked, executed, and failed events

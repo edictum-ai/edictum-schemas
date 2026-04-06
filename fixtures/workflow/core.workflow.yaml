@@ -110,7 +110,7 @@ fixtures:
 
   - id: wf-002
     workflow: core-dev-process
-    description: "no-exit stage auto-completes"
+    description: "no-exit stage advances on legitimate next-stage work"
     initial_state:
       session_id: session-002
       active_stage: implement
@@ -393,3 +393,54 @@ fixtures:
             reads:
               - specs/008.md
             stage_calls: {}
+
+  - id: wf-009
+    workflow: core-dev-process
+    description: "no-exit stage stays active for current-stage work and advances only on legitimate next-stage work"
+    initial_state:
+      session_id: session-009
+      active_stage: implement
+      completed_stages:
+        - read-context
+      approvals: {}
+      evidence:
+        reads:
+          - specs/008.md
+        stage_calls: {}
+    steps:
+      - id: edit-stays-in-implement
+        call:
+          tool: Edit
+          args:
+            path: src/app.ts
+        execution: success
+        expect:
+          decision: allow
+          active_stage: implement
+          completed_stages:
+            - read-context
+          approvals: {}
+          evidence:
+            reads:
+              - specs/008.md
+            stage_calls: {}
+
+      - id: verify-advances-to-local-verify
+        call:
+          tool: Bash
+          args:
+            command: npm test
+        execution: success
+        expect:
+          decision: allow
+          active_stage: local-verify
+          completed_stages:
+            - read-context
+            - implement
+          approvals: {}
+          evidence:
+            reads:
+              - specs/008.md
+            stage_calls:
+              local-verify:
+                - npm test
