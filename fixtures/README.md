@@ -95,8 +95,9 @@ dedicated format for stage progression, approval gating, and evidence updates.
 
 Workflow adapter conformance fixtures live under
 [`workflow-adapter-conformance/`](workflow-adapter-conformance/README.md).
-They extend the workflow fixture model with approval loop inputs, session
-lineage, and ordered audit-event expectations for Spec 017 P6.
+They extend the workflow fixture model with approval loop inputs,
+programmatic stage-move steps, session lineage, and ordered audit-event
+expectations for Spec 017 P6.
 
 ## Workflow Coding-Guard Fixtures
 

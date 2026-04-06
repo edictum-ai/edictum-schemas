@@ -1,5 +1,5 @@
 suite: workflow-adapter-conformance-core
-version: 1
+version: 2
 description: "Spec 017 P6 workflow adapter audit, lineage, and recording cases"
 
 workflows:
@@ -906,3 +906,51 @@ fixtures:
                 blocked_reason: null
                 pending_approval:
                   required: false
+
+  - id: "wac-008"
+    workflow: dev-loop
+    description: "set_stage_to an approval stage immediately surfaces pending approval in state and workflow_state_updated"
+    initial_state:
+      session_id: wf-set-stage-approval-001
+      active_stage: read-analyze
+      completed_stages: []
+      approvals: {}
+      evidence:
+        reads: []
+        stage_calls: {}
+      blocked_reason: null
+      pending_approval:
+        required: false
+    steps:
+      - id: set-stage-to-local-review
+        set_stage_to: local-review
+        expect:
+          active_stage: local-review
+          completed_stages:
+            - read-analyze
+            - implement
+            - local-verify
+          approvals: {}
+          evidence:
+            reads: []
+            stage_calls: {}
+          blocked_reason: null
+          pending_approval:
+            required: true
+            stage_id: local-review
+            message: "Approve after reviewing the diff and pytest output"
+          audit_events:
+            - action: workflow_state_updated
+              workflow:
+                name: dev-loop
+                version: "2026-04-04"
+                active_stage: local-review
+                completed_stages:
+                  - read-analyze
+                  - implement
+                  - local-verify
+                blocked_reason: null
+                pending_approval:
+                  required: true
+                  stage_id: local-review
+                  message: "Approve after reviewing the diff and pytest output"
