@@ -79,6 +79,25 @@ workflows:
           - condition: command_matches("^npm test$")
             message: "Run npm test successfully before moving on"
 
+  check-gated-ship:
+    apiVersion: edictum/v1
+    kind: Workflow
+    metadata:
+      name: check-gated-ship
+    stages:
+      - id: implement
+        description: "Work happens here, but push must stay blocked"
+        tools: [Bash]
+        checks:
+          - command_not_matches: "^git push origin [a-z0-9._/-]+$"
+            message: "Push belongs in ship"
+
+      - id: ship
+        description: "Push only after implement is complete"
+        entry:
+          - condition: stage_complete("implement")
+        tools: [Bash]
+
 fixtures:
   - id: wf-001
     workflow: core-dev-process
@@ -444,3 +463,31 @@ fixtures:
             stage_calls:
               local-verify:
                 - npm test
+
+  - id: wf-010
+    workflow: check-gated-ship
+    description: "failing current-stage checks block before no-exit auto-advancement"
+    initial_state:
+      session_id: session-010
+      active_stage: implement
+      completed_stages: []
+      approvals: {}
+      evidence:
+        reads: []
+        stage_calls: {}
+    steps:
+      - id: push-stays-blocked-in-implement
+        call:
+          tool: Bash
+          args:
+            command: git push origin feature-branch
+        execution: not_run
+        expect:
+          decision: deny
+          active_stage: implement
+          completed_stages: []
+          approvals: {}
+          evidence:
+            reads: []
+            stage_calls: {}
+          message_contains: "Push belongs in ship"

@@ -95,6 +95,7 @@ def test_workflow_core_fixture_suite_shape() -> None:
 
     assert parsed["suite"] == "workflow-core"
     assert parsed["version"] == 1
+    assert "check-gated-ship" in parsed["workflows"]
 
     fixtures = {fixture["id"]: fixture for fixture in parsed["fixtures"]}
     no_exit_regression = fixtures["wf-009"]
@@ -110,6 +111,19 @@ def test_workflow_core_fixture_suite_shape() -> None:
     assert no_exit_regression["steps"][1]["expect"]["evidence"]["stage_calls"] == {
         "local-verify": ["npm test"]
     }
+
+    check_before_advance = fixtures["wf-010"]
+    step = check_before_advance["steps"][0]
+
+    assert check_before_advance["workflow"] == "check-gated-ship"
+    assert step["id"] == "push-stays-blocked-in-implement"
+    assert step["call"]["tool"] == "Bash"
+    assert step["call"]["args"]["command"] == "git push origin feature-branch"
+    assert step["execution"] == "not_run"
+    assert step["expect"]["decision"] == "deny"
+    assert step["expect"]["active_stage"] == "implement"
+    assert step["expect"]["completed_stages"] == []
+    assert step["expect"]["message_contains"] == "Push belongs in ship"
 
 
 def test_workflow_adapter_conformance_fixture_suite_shape() -> None:
