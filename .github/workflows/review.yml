@@ -40,54 +40,33 @@ jobs:
           # not yet on base), provide the canonical default so the reviewer always
           # knows to start /tmp/review.md with the required edictum-review marker.
           if [ ! -s /tmp/governance/review-template.md ]; then
-            cat > /tmp/governance/review-template.md << 'TMPL'
-<!-- edictum-review -->
-<!-- STATUS: {status} -->
-<!-- ISSUE_COUNT: {issue_count} -->
-
-## {status_icon} Code Review
-
-{status_summary}
-
-{critical_section}
-
-{warnings_section}
-
-{suggestions_section}
-
-{clean_section}
-
----
-
-<details>
-<summary>Review details</summary>
-
-| | |
-|---|---|
-| **Files reviewed** | {file_count} |
-| **Checks applied** | {checks_applied} |
-| **Issues found** | {issue_count} |
-| **Criteria sources** | `CLAUDE.md` |
-
-### Files
-
-{file_list}
-
-</details>
-TMPL
+            printf '%s\n' \
+              '<!-- edictum-review -->' \
+              '<!-- STATUS: {status} -->' \
+              '<!-- ISSUE_COUNT: {issue_count} -->' \
+              '' \
+              '## {status_icon} Code Review' \
+              '' \
+              '{status_summary}' \
+              '' \
+              '{warnings_section}' \
+              '' \
+              '{suggestions_section}' \
+              '' \
+              '{clean_section}' \
+              > /tmp/governance/review-template.md
           fi
 
           if [ ! -s /tmp/governance/review-instructions.md ]; then
-            cat > /tmp/governance/review-instructions.md << 'INSTR'
-Fill in the placeholders in review-template.md and write the result to /tmp/review.md.
-
-HARD REQUIREMENT: /tmp/review.md MUST start with exactly `<!-- edictum-review -->` on line 1.
-
-{status}: one of pass, warn, fail
-{status_icon}: ✅ pass / ⚠️ warn / 🚨 fail
-{status_summary}: one-line summary of findings
-Suggestions do NOT elevate status — only warnings or critical issues do.
-INSTR
+            printf '%s\n' \
+              'Fill in the placeholders in review-template.md and write the result to /tmp/review.md.' \
+              '' \
+              'HARD REQUIREMENT: /tmp/review.md MUST start with exactly <!-- edictum-review --> on line 1.' \
+              '' \
+              '{status}: one of pass, warn, fail' \
+              '{status_icon}: pass=OK warn=WARNING fail=CRITICAL' \
+              'Suggestions do NOT elevate status.' \
+              > /tmp/governance/review-instructions.md
           fi
 
       - name: Generate app token
