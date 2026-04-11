@@ -1,0 +1,242 @@
+suite: workflow-v0.18-wildcard-tools
+version: 1
+description: "v0.18 wildcard prefix support in stage.tools"
+
+workflows:
+  mcp-restricted:
+    apiVersion: edictum/v1
+    kind: Workflow
+    metadata:
+      name: mcp-restricted
+    stages:
+      - id: mcp-work
+        description: "Only mcp__ tools are allowed"
+        tools: ["mcp__*"]
+
+  mixed-tools:
+    apiVersion: edictum/v1
+    kind: Workflow
+    metadata:
+      name: mixed-tools
+    stages:
+      - id: read-or-mcp
+        description: "Read or any mcp__ tool is allowed"
+        tools: [Read, "mcp__*"]
+
+      - id: implement
+        description: "Edit only after read-or-mcp is complete"
+        entry:
+          - condition: stage_complete("read-or-mcp")
+        tools: [Edit]
+
+  namespace-restricted:
+    apiVersion: edictum/v1
+    kind: Workflow
+    metadata:
+      name: namespace-restricted
+    stages:
+      - id: ci-only
+        description: "Only mcp__ci__ namespace tools are allowed"
+        tools: ["mcp__ci__*"]
+
+fixtures:
+  - id: wt-001
+    workflow: mcp-restricted
+    description: "mcp__* wildcard allows any mcp__ tool"
+    initial_state:
+      session_id: session-wt-001
+      active_stage: mcp-work
+      completed_stages: []
+      approvals: {}
+      evidence:
+        reads: []
+        stage_calls: {}
+    steps:
+      - id: mcp-github-allowed
+        call:
+          tool: "mcp__github__list_prs"
+          args:
+            repo: edictum
+        execution: success
+        expect:
+          decision: allow
+          active_stage: mcp-work
+          completed_stages: []
+          approvals: {}
+          evidence:
+            reads: []
+            stage_calls: {}
+
+      - id: mcp-slack-also-allowed
+        call:
+          tool: "mcp__slack__post_message"
+          args:
+            channel: general
+        execution: success
+        expect:
+          decision: allow
+          active_stage: mcp-work
+          completed_stages: []
+          approvals: {}
+          evidence:
+            reads: []
+            stage_calls: {}
+
+  - id: wt-002
+    workflow: mcp-restricted
+    description: "mcp__* wildcard blocks exact tool names that do not match the prefix"
+    initial_state:
+      session_id: session-wt-002
+      active_stage: mcp-work
+      completed_stages: []
+      approvals: {}
+      evidence:
+        reads: []
+        stage_calls: {}
+    steps:
+      - id: read-blocked
+        call:
+          tool: Read
+          args:
+            path: README.md
+        execution: not_run
+        expect:
+          decision: deny
+          active_stage: mcp-work
+          completed_stages: []
+          approvals: {}
+          evidence:
+            reads: []
+            stage_calls: {}
+
+      - id: edit-also-blocked
+        call:
+          tool: Edit
+          args:
+            path: src/app.ts
+        execution: not_run
+        expect:
+          decision: deny
+          active_stage: mcp-work
+          completed_stages: []
+          approvals: {}
+          evidence:
+            reads: []
+            stage_calls: {}
+
+      - id: bash-also-blocked
+        call:
+          tool: Bash
+          args:
+            command: pytest
+        execution: not_run
+        expect:
+          decision: deny
+          active_stage: mcp-work
+          completed_stages: []
+          approvals: {}
+          evidence:
+            reads: []
+            stage_calls: {}
+
+  - id: wt-003
+    workflow: mixed-tools
+    description: "exact name and wildcard mix: Read and mcp__* are allowed, Edit is blocked"
+    initial_state:
+      session_id: session-wt-003
+      active_stage: read-or-mcp
+      completed_stages: []
+      approvals: {}
+      evidence:
+        reads: []
+        stage_calls: {}
+    steps:
+      - id: read-allowed
+        call:
+          tool: Read
+          args:
+            path: README.md
+        execution: success
+        expect:
+          decision: allow
+          active_stage: read-or-mcp
+          completed_stages: []
+          approvals: {}
+          evidence:
+            reads:
+              - README.md
+            stage_calls: {}
+
+      - id: mcp-allowed
+        call:
+          tool: "mcp__github__list_prs"
+          args:
+            repo: edictum
+        execution: success
+        expect:
+          decision: allow
+          active_stage: read-or-mcp
+          completed_stages: []
+          approvals: {}
+          evidence:
+            reads:
+              - README.md
+            stage_calls: {}
+
+      - id: edit-blocked
+        call:
+          tool: Edit
+          args:
+            path: src/app.ts
+        execution: not_run
+        expect:
+          decision: deny
+          active_stage: read-or-mcp
+          completed_stages: []
+          approvals: {}
+          evidence:
+            reads:
+              - README.md
+            stage_calls: {}
+
+  - id: wt-004
+    workflow: namespace-restricted
+    description: "narrower wildcard mcp__ci__* allows only that namespace, blocks sibling namespace"
+    initial_state:
+      session_id: session-wt-004
+      active_stage: ci-only
+      completed_stages: []
+      approvals: {}
+      evidence:
+        reads: []
+        stage_calls: {}
+    steps:
+      - id: ci-status-allowed
+        call:
+          tool: "mcp__ci__status"
+          args:
+            branch: main
+        execution: success
+        expect:
+          decision: allow
+          active_stage: ci-only
+          completed_stages: []
+          approvals: {}
+          evidence:
+            reads: []
+            stage_calls: {}
+
+      - id: github-blocked-different-namespace
+        call:
+          tool: "mcp__github__list_prs"
+          args:
+            repo: edictum
+        execution: not_run
+        expect:
+          decision: deny
+          active_stage: ci-only
+          completed_stages: []
+          approvals: {}
+          evidence:
+            reads: []
+            stage_calls: {}

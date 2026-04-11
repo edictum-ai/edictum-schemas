@@ -1,0 +1,212 @@
+suite: workflow-v0.18-mcp-result-evidence
+version: 1
+description: "v0.18 MCP result evidence recording and mcp_result_matches() gate condition"
+
+# Evidence model extension for MCP results:
+#
+#   evidence:
+#     reads: []
+#     stage_calls: {}
+#     mcp_results:
+#       <tool_name>:
+#         - <result object recorded after successful execution>
+#
+# mcp_result_matches(tool, field, value) gate condition:
+#   Passes when evidence contains at least one recorded result for <tool>
+#   where the top-level field <field> equals <value>.
+#
+# Step-level mcp_result: field:
+#   Specifies the structured result returned by the MCP tool.
+#   Runtimes record this object into mcp_results evidence ONLY after a
+#   success execution. A failed or not_run execution must not record it.
+
+workflows:
+  ci-gated-deploy:
+    apiVersion: edictum/v1
+    kind: Workflow
+    metadata:
+      name: ci-gated-deploy
+    stages:
+      - id: check-ci
+        description: "Check CI status before deploying"
+        tools: ["mcp__ci__*"]
+        exit:
+          - condition: mcp_result_matches("mcp__ci__status", "outcome", "passing")
+            message: "CI must be passing before deploy"
+
+      - id: deploy
+        description: "Deploy after CI is green"
+        entry:
+          - condition: stage_complete("check-ci")
+        tools: ["mcp__deploy__*"]
+
+fixtures:
+  - id: mr-001
+    workflow: ci-gated-deploy
+    description: "successful MCP call records its result as evidence"
+    initial_state:
+      session_id: session-mr-001
+      active_stage: check-ci
+      completed_stages: []
+      approvals: {}
+      evidence:
+        reads: []
+        stage_calls: {}
+        mcp_results: {}
+    steps:
+      - id: ci-status-success
+        call:
+          tool: "mcp__ci__status"
+          args:
+            branch: main
+        mcp_result:
+          outcome: passing
+          branch: main
+          run_id: "run-42"
+        execution: success
+        expect:
+          decision: allow
+          active_stage: check-ci
+          completed_stages: []
+          approvals: {}
+          evidence:
+            reads: []
+            stage_calls: {}
+            mcp_results:
+              mcp__ci__status:
+                - outcome: passing
+                  branch: main
+                  run_id: "run-42"
+
+  - id: mr-002
+    workflow: ci-gated-deploy
+    description: "mcp_result_matches exit gate passes when matching evidence is present; stage advances"
+    initial_state:
+      session_id: session-mr-002
+      active_stage: check-ci
+      completed_stages: []
+      approvals: {}
+      evidence:
+        reads: []
+        stage_calls: {}
+        mcp_results:
+          mcp__ci__status:
+            - outcome: passing
+              branch: main
+    steps:
+      - id: deploy-allowed-after-ci-green
+        call:
+          tool: "mcp__deploy__trigger"
+          args:
+            env: production
+        execution: success
+        expect:
+          decision: allow
+          active_stage: deploy
+          completed_stages: [check-ci]
+          approvals: {}
+          evidence:
+            reads: []
+            stage_calls: {}
+            mcp_results:
+              mcp__ci__status:
+                - outcome: passing
+                  branch: main
+
+  - id: mr-003
+    workflow: ci-gated-deploy
+    description: "mcp_result_matches exit gate blocks when the recorded outcome does not match"
+    initial_state:
+      session_id: session-mr-003
+      active_stage: check-ci
+      completed_stages: []
+      approvals: {}
+      evidence:
+        reads: []
+        stage_calls: {}
+        mcp_results:
+          mcp__ci__status:
+            - outcome: failing
+              branch: main
+    steps:
+      - id: deploy-blocked-ci-failing
+        call:
+          tool: "mcp__deploy__trigger"
+          args:
+            env: production
+        execution: not_run
+        expect:
+          decision: deny
+          active_stage: check-ci
+          completed_stages: []
+          approvals: {}
+          evidence:
+            reads: []
+            stage_calls: {}
+            mcp_results:
+              mcp__ci__status:
+                - outcome: failing
+                  branch: main
+          message_contains: "CI must be passing before deploy"
+
+  - id: mr-004
+    workflow: ci-gated-deploy
+    description: "failed MCP call does not record its result as evidence"
+    initial_state:
+      session_id: session-mr-004
+      active_stage: check-ci
+      completed_stages: []
+      approvals: {}
+      evidence:
+        reads: []
+        stage_calls: {}
+        mcp_results: {}
+    steps:
+      - id: ci-status-errors
+        call:
+          tool: "mcp__ci__status"
+          args:
+            branch: main
+        mcp_result:
+          outcome: passing
+          branch: main
+        execution: error
+        expect:
+          decision: allow
+          active_stage: check-ci
+          completed_stages: []
+          approvals: {}
+          evidence:
+            reads: []
+            stage_calls: {}
+            mcp_results: {}
+
+  - id: mr-005
+    workflow: ci-gated-deploy
+    description: "mcp_result_matches gate blocks when no MCP evidence has been recorded yet"
+    initial_state:
+      session_id: session-mr-005
+      active_stage: check-ci
+      completed_stages: []
+      approvals: {}
+      evidence:
+        reads: []
+        stage_calls: {}
+        mcp_results: {}
+    steps:
+      - id: deploy-blocked-no-evidence
+        call:
+          tool: "mcp__deploy__trigger"
+          args:
+            env: production
+        execution: not_run
+        expect:
+          decision: deny
+          active_stage: check-ci
+          completed_stages: []
+          approvals: {}
+          evidence:
+            reads: []
+            stage_calls: {}
+            mcp_results: {}
+          message_contains: "CI must be passing before deploy"

@@ -1,0 +1,214 @@
+suite: workflow-v0.18-terminal-stage
+version: 1
+description: "v0.18 terminal: true stage primitive"
+
+# Semantic contract for terminal: true:
+#
+# 1. A stage with terminal: true has no implicit successor.
+# 2. If tools is omitted on a terminal stage, ALL tool calls in that stage are
+#    denied (overrides the normal "no tools = unrestricted" default).
+# 3. If tools is present on a terminal stage, only those tools are allowed.
+# 4. Once the terminal stage exit conditions are satisfied (or the stage has no
+#    exit), any subsequent tool call is denied with a "workflow complete" reason.
+# 5. When a no-exit prior stage auto-advances into a terminal stage, the
+#    triggering call is re-evaluated in the terminal stage and denied if that
+#    stage has no matching tools.
+
+workflows:
+  work-then-done:
+    apiVersion: edictum/v1
+    kind: Workflow
+    metadata:
+      name: work-then-done
+    stages:
+      - id: implement
+        description: "Make changes"
+        tools: [Edit]
+
+      - id: done
+        description: "Workflow is complete — no further work is accepted"
+        entry:
+          - condition: stage_complete("implement")
+        terminal: true
+
+  gated-terminal:
+    apiVersion: edictum/v1
+    kind: Workflow
+    metadata:
+      name: gated-terminal
+    stages:
+      - id: implement
+        description: "Make changes"
+        tools: [Edit]
+
+      - id: verify-and-finish
+        description: "Run pytest to finish — terminal after exit conditions are met"
+        entry:
+          - condition: stage_complete("implement")
+        tools: [Bash]
+        exit:
+          - condition: command_matches("^pytest$")
+            message: "Run pytest to complete the workflow"
+        terminal: true
+
+fixtures:
+  - id: ts-001
+    workflow: work-then-done
+    description: "terminal stage with no tools: all tool calls are denied"
+    initial_state:
+      session_id: session-ts-001
+      active_stage: done
+      completed_stages: [implement]
+      approvals: {}
+      evidence:
+        reads: []
+        stage_calls: {}
+    steps:
+      - id: edit-denied-in-terminal
+        call:
+          tool: Edit
+          args:
+            path: src/app.ts
+        execution: not_run
+        expect:
+          decision: deny
+          active_stage: done
+          completed_stages: [implement]
+          approvals: {}
+          evidence:
+            reads: []
+            stage_calls: {}
+
+      - id: read-also-denied-in-terminal
+        call:
+          tool: Read
+          args:
+            path: README.md
+        execution: not_run
+        expect:
+          decision: deny
+          active_stage: done
+          completed_stages: [implement]
+          approvals: {}
+          evidence:
+            reads: []
+            stage_calls: {}
+
+  - id: ts-002
+    workflow: gated-terminal
+    description: "terminal stage with tools: allowed tool is accepted before exit conditions are met"
+    initial_state:
+      session_id: session-ts-002
+      active_stage: verify-and-finish
+      completed_stages: [implement]
+      approvals: {}
+      evidence:
+        reads: []
+        stage_calls: {}
+    steps:
+      - id: pytest-allowed-before-exit
+        call:
+          tool: Bash
+          args:
+            command: pytest
+        execution: success
+        expect:
+          decision: allow
+          active_stage: verify-and-finish
+          completed_stages: [implement]
+          approvals: {}
+          evidence:
+            reads: []
+            stage_calls:
+              verify-and-finish:
+                - pytest
+
+  - id: ts-003
+    workflow: gated-terminal
+    description: "terminal stage: call after exit conditions are met is denied — workflow complete"
+    initial_state:
+      session_id: session-ts-003
+      active_stage: verify-and-finish
+      completed_stages: [implement]
+      approvals: {}
+      evidence:
+        reads: []
+        stage_calls:
+          verify-and-finish:
+            - pytest
+    steps:
+      - id: edit-denied-workflow-complete
+        call:
+          tool: Edit
+          args:
+            path: src/app.ts
+        execution: not_run
+        expect:
+          decision: deny
+          active_stage: verify-and-finish
+          completed_stages: [implement]
+          approvals: {}
+          evidence:
+            reads: []
+            stage_calls:
+              verify-and-finish:
+                - pytest
+
+      - id: bash-also-denied-workflow-complete
+        call:
+          tool: Bash
+          args:
+            command: pytest
+        execution: not_run
+        expect:
+          decision: deny
+          active_stage: verify-and-finish
+          completed_stages: [implement]
+          approvals: {}
+          evidence:
+            reads: []
+            stage_calls:
+              verify-and-finish:
+                - pytest
+
+  - id: ts-004
+    workflow: work-then-done
+    description: "no-exit prior stage auto-advances into terminal: triggering call is denied in terminal context"
+    initial_state:
+      session_id: session-ts-004
+      active_stage: implement
+      completed_stages: []
+      approvals: {}
+      evidence:
+        reads: []
+        stage_calls: {}
+    steps:
+      - id: edit-allowed-in-implement
+        call:
+          tool: Edit
+          args:
+            path: src/app.ts
+        execution: success
+        expect:
+          decision: allow
+          active_stage: implement
+          completed_stages: []
+          approvals: {}
+          evidence:
+            reads: []
+            stage_calls: {}
+
+      - id: bash-advances-to-terminal-and-is-denied
+        call:
+          tool: Bash
+          args:
+            command: echo done
+        execution: not_run
+        expect:
+          decision: deny
+          active_stage: done
+          completed_stages: [implement]
+          approvals: {}
+          evidence:
+            reads: []
+            stage_calls: {}
