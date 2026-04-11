@@ -36,6 +36,60 @@ jobs:
           git show "origin/${BASE_REF}:.github/review-instructions.md" > /tmp/governance/review-instructions.md 2>/dev/null || true
           git show "origin/${BASE_REF}:.github/review-template.md" > /tmp/governance/review-template.md 2>/dev/null || true
 
+          # Fallback: if template is absent (bootstrapping — file added in this PR,
+          # not yet on base), provide the canonical default so the reviewer always
+          # knows to start /tmp/review.md with the required edictum-review marker.
+          if [ ! -s /tmp/governance/review-template.md ]; then
+            cat > /tmp/governance/review-template.md << 'TMPL'
+<!-- edictum-review -->
+<!-- STATUS: {status} -->
+<!-- ISSUE_COUNT: {issue_count} -->
+
+## {status_icon} Code Review
+
+{status_summary}
+
+{critical_section}
+
+{warnings_section}
+
+{suggestions_section}
+
+{clean_section}
+
+---
+
+<details>
+<summary>Review details</summary>
+
+| | |
+|---|---|
+| **Files reviewed** | {file_count} |
+| **Checks applied** | {checks_applied} |
+| **Issues found** | {issue_count} |
+| **Criteria sources** | `CLAUDE.md` |
+
+### Files
+
+{file_list}
+
+</details>
+TMPL
+          fi
+
+          if [ ! -s /tmp/governance/review-instructions.md ]; then
+            cat > /tmp/governance/review-instructions.md << 'INSTR'
+Fill in the placeholders in review-template.md and write the result to /tmp/review.md.
+
+HARD REQUIREMENT: /tmp/review.md MUST start with exactly `<!-- edictum-review -->` on line 1.
+
+{status}: one of pass, warn, fail
+{status_icon}: ✅ pass / ⚠️ warn / 🚨 fail
+{status_summary}: one-line summary of findings
+Suggestions do NOT elevate status — only warnings or critical issues do.
+INSTR
+          fi
+
       - name: Generate app token
         id: app-token
         uses: actions/create-github-app-token@d72941d797fd3113feb6b93fd0dec494b13a2547 # v1
@@ -84,6 +138,7 @@ jobs:
             - One exhaustive pass. Find ALL issues.
             - A clean PR is a good outcome.
             - Do NOT post comments directly — write to /tmp/review.md and /tmp/review-payload.json only.
+            - HARD REQUIREMENT: `/tmp/review.md` MUST start with `<!-- edictum-review -->` on line 1 (no blank lines before it). The validate step runs `head -1 /tmp/review.md | grep -q '<!-- edictum-review -->'` and marks the review corrupt if this line is missing.
 
       - name: Validate review output
         id: validate
