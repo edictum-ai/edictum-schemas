@@ -41,7 +41,9 @@ def test_schema_required_fields() -> None:
     assert "kind" in required
     assert "metadata" in required
     assert "defaults" in required
-    assert "rules" in required
+    # rules is conditionally required (mandatory when extends is absent; see if/then)
+    assert "rules" not in required
+    assert "extends" in schema["properties"]
 
 
 def test_schema_defs_present() -> None:

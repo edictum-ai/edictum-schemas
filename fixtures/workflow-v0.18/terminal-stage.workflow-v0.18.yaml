@@ -72,6 +72,7 @@ fixtures:
         execution: not_run
         expect:
           decision: deny
+          message_contains: "workflow complete"
           active_stage: done
           completed_stages: [implement]
           approvals: {}
@@ -87,6 +88,7 @@ fixtures:
         execution: not_run
         expect:
           decision: deny
+          message_contains: "workflow complete"
           active_stage: done
           completed_stages: [implement]
           approvals: {}
@@ -145,6 +147,7 @@ fixtures:
         execution: not_run
         expect:
           decision: deny
+          message_contains: "workflow complete"
           active_stage: verify-and-finish
           completed_stages: [implement]
           approvals: {}
@@ -162,6 +165,7 @@ fixtures:
         execution: not_run
         expect:
           decision: deny
+          message_contains: "workflow complete"
           active_stage: verify-and-finish
           completed_stages: [implement]
           approvals: {}

@@ -36,7 +36,7 @@ evidence:
   stage_calls: {}
   mcp_results:
     mcp__ci__status:
-      - outcome: success
+      - outcome: passing
         branch: main
 ```
 
