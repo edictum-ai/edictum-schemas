@@ -2,7 +2,7 @@
   "name": "@edictum/schemas",
   "version": "0.1.0",
   "type": "module",
-  "description": "Shared JSON Schema for Edictum contract bundles",
+  "description": "Shared JSON Schema for Edictum rulesets and workflow documents",
   "license": "MIT",
   "exports": {
     ".": "./schemas/edictum-v2.schema.json",
@@ -17,7 +17,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/edictum/edictum-schemas.git"
+    "url": "https://github.com/edictum-ai/edictum-schemas.git"
   },
   "keywords": [
     "edictum",

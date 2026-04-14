@@ -5,12 +5,12 @@ build-backend = "hatchling.build"
 [project]
 name = "edictum-schemas"
 version = "0.1.0"
-description = "Shared JSON Schema for Edictum contract bundles"
+description = "Shared JSON Schema for Edictum rulesets and workflow documents"
 license = "MIT"
 requires-python = ">=3.11"
 keywords = ["edictum", "schema", "json-schema", "contract", "ai-safety"]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
@@ -19,7 +19,7 @@ classifiers = [
 ]
 
 [project.urls]
-Repository = "https://github.com/edictum/edictum-schemas"
+Repository = "https://github.com/edictum-ai/edictum-schemas"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/edictum_schemas"]
