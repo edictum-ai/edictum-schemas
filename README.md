@@ -11,7 +11,7 @@ The schema defines the structure for Edictum YAML rulesets (`edictum/v1` `Rulese
 - `action:` (was `effect:`)
 - `action: block` (was `effect: deny`)
 - `action: ask` (was `effect: approve`)
-- `kind: Ruleset` (was `kind: ContractBundle`)
+- `kind: Ruleset`
 
 `schemas/edictum-v2.schema.json` is the canonical file exported by this package and loaded by the Python helper.
 `schemas/edictum-v1.schema.json` is retained only as a deprecated compatibility alias for consumers that still reference the historical v1 schema identifier. SDK-level backward compatibility lives in the language implementations, not in a separate canonical v1 schema.

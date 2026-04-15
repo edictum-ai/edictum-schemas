@@ -1,8 +1,8 @@
 {
   "name": "@edictum/schemas",
-  "version": "0.1.0",
+  "version": "0.1.0-beta.1",
   "type": "module",
-  "description": "Shared JSON Schema for Edictum contract bundles",
+  "description": "Shared JSON Schema for Edictum rulesets",
   "license": "MIT",
   "exports": {
     ".": "./schemas/edictum-v2.schema.json",
@@ -17,13 +17,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/edictum/edictum-schemas.git"
+    "url": "https://github.com/edictum-ai/edictum-schemas.git"
   },
   "keywords": [
     "edictum",
     "schema",
     "json-schema",
-    "contract",
+    "ruleset",
     "ai-safety"
   ]
 }
