@@ -14,6 +14,7 @@ the fixture classes that apply to its runtime surface.
 - `workflow/`: Spec 008 workflow runtime cases
 - `workflow-adapter-conformance/`: Spec 017 P6 adapter audit and lineage cases
 - `workflow-coding-guard/`: Spec 017 P7 coding-guard workflow cases
+- `workflow-v0.18/`: v0.18 shared-semantics additions (wildcard tools, terminal stage, MCP result evidence, extends inheritance)
 
 ## Ruleset Evaluation Fixtures
 
@@ -105,6 +106,14 @@ Workflow-specific coding-guard fixtures live under
 [`workflow-coding-guard/`](workflow-coding-guard/README.md).
 They reuse the workflow fixture state model and add approval loop inputs plus
 operator reset steps for Spec 017 P7.
+
+## Workflow v0.18 Fixtures
+
+v0.18 shared-semantics fixtures live under
+[`workflow-v0.18/`](workflow-v0.18/README.md).
+They cover four additions: wildcard prefix support in `stage.tools`, the
+`terminal: true` stage primitive, MCP result evidence recording and the
+`mcp_result_matches(...)` gate condition, and `extends:` ruleset inheritance.
 
 ## Shared Contract
 
