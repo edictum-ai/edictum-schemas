@@ -1,10 +1,10 @@
 suite: effect-enums
 version: 1
-description: "Contracts using effect values invalid for their contract type"
+description: "Rules using effect values invalid for their rule type"
 
 fixtures:
   - id: "rej-040"
-    description: "Pre contract with effect 'warn' — only valid for post contracts"
+    description: "Pre rule with effect 'warn' only valid for post rules"
     bundle:
       apiVersion: edictum/v1
       kind: Ruleset
@@ -26,7 +26,7 @@ fixtures:
       error_contains: "action"
 
   - id: "rej-041"
-    description: "Pre contract with effect 'redact' — only valid for post contracts"
+    description: "Pre rule with effect 'redact' only valid for post rules"
     bundle:
       apiVersion: edictum/v1
       kind: Ruleset
@@ -48,7 +48,7 @@ fixtures:
       error_contains: "action"
 
   - id: "rej-042"
-    description: "Pre contract with effect 'allow' — not a valid effect value"
+    description: "Pre rule with effect 'allow' is not a valid effect value"
     bundle:
       apiVersion: edictum/v1
       kind: Ruleset
@@ -70,7 +70,7 @@ fixtures:
       error_contains: "action"
 
   - id: "rej-043"
-    description: "Post contract with effect 'approve' — only valid for pre contracts"
+    description: "Post rule with effect 'approve' only valid for pre rules"
     bundle:
       apiVersion: edictum/v1
       kind: Ruleset
@@ -92,7 +92,7 @@ fixtures:
       error_contains: "action"
 
   - id: "rej-044"
-    description: "Session contract with effect 'warn' — must be 'deny'"
+    description: "Session rule with effect 'warn' uses an invalid block action"
     bundle:
       apiVersion: edictum/v1
       kind: Ruleset

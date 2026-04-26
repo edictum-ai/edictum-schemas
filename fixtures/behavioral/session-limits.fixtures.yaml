@@ -1,10 +1,10 @@
 suite: session-limits
 version: 1
-description: "Session contracts that enforce call limits"
+description: "Session rules that enforce call limits"
 
 fixtures:
   - id: "session-001"
-    description: "Total tool calls exceeding max_tool_calls is denied"
+    description: "Total tool calls exceeding max_tool_calls are blocked"
 
     contract:
       apiVersion: edictum/v1
@@ -65,7 +65,7 @@ fixtures:
       verdict: allowed
 
   - id: "session-003"
-    description: "Per-tool call limit exceeded for specific tool is denied"
+    description: "Per-tool call limit exceeded for specific tool is blocked"
 
     contract:
       apiVersion: edictum/v1

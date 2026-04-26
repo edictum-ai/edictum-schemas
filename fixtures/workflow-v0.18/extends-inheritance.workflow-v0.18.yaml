@@ -5,10 +5,10 @@ description: "v0.18 extends: ruleset inheritance"
 # Format extension for this file:
 #
 # A top-level `rulesets:` section defines named Ruleset documents.
-# A fixture's `contract:` field may be either an inline Ruleset object
-# (existing format) or a string name referencing an entry in `rulesets:`.
+# A fixture document reference may be either an inline Ruleset object
+# or a string name referencing an entry in `rulesets:`.
 #
-# When `contract:` is a string, runtimes must:
+# When the document reference is a string, runtimes must:
 #   1. Look up the named ruleset in `rulesets:`.
 #   2. Resolve the `extends:` field by merging the parent's rules BEFORE the
 #      child's rules. The child's rules evaluate after the parent's rules.

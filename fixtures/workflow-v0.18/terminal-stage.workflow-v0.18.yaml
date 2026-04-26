@@ -2,16 +2,16 @@ suite: workflow-v0.18-terminal-stage
 version: 1
 description: "v0.18 terminal: true stage primitive"
 
-# Semantic contract for terminal: true:
+# Runtime boundary for terminal: true:
 #
 # 1. A stage with terminal: true has no implicit successor.
 # 2. If tools is omitted on a terminal stage, ALL tool calls in that stage are
-#    denied (overrides the normal "no tools = unrestricted" default).
+#    blocked (overrides the normal "no tools = unrestricted" default).
 # 3. If tools is present on a terminal stage, only those tools are allowed.
 # 4. Once the terminal stage exit conditions are satisfied (or the stage has no
-#    exit), any subsequent tool call is denied with a "workflow complete" reason.
+#    exit), any subsequent tool call is blocked with a "workflow complete" reason.
 # 5. When a no-exit prior stage auto-advances into a terminal stage, the
-#    triggering call is re-evaluated in the terminal stage and denied if that
+#    triggering call is re-evaluated in the terminal stage and blocked if that
 #    stage has no matching tools.
 
 workflows:
@@ -54,7 +54,7 @@ workflows:
 fixtures:
   - id: ts-001
     workflow: work-then-done
-    description: "terminal stage with no tools: all tool calls are denied"
+    description: "terminal stage with no tools: all tool calls are blocked"
     initial_state:
       session_id: session-ts-001
       active_stage: done
@@ -127,7 +127,7 @@ fixtures:
 
   - id: ts-003
     workflow: gated-terminal
-    description: "terminal stage: call after exit conditions are met is denied — workflow complete"
+    description: "terminal stage: call after exit conditions are met is blocked"
     initial_state:
       session_id: session-ts-003
       active_stage: verify-and-finish
@@ -177,7 +177,7 @@ fixtures:
 
   - id: ts-004
     workflow: work-then-done
-    description: "no-exit prior stage auto-advances into terminal: triggering call is denied in terminal context"
+    description: "no-exit prior stage auto-advances into terminal: triggering call is blocked in terminal context"
     initial_state:
       session_id: session-ts-004
       active_stage: implement

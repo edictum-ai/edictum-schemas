@@ -1,7 +1,8 @@
 # Edictum Shared Test Fixtures
 
-Cross-language shared fixtures for `edictum/v1` ruleset evaluation and workflow
-conformance.
+These fixtures prove behavioral conformance is the same across SDKs. They cover
+Ruleset evaluation plus Workflow Gate stage progression, approval, evidence,
+reset, and blocked actions.
 
 Every language implementation (Python, TypeScript, Go) should discover and run
 the fixture classes that apply to its runtime surface.
@@ -24,10 +25,9 @@ The ruleset-evaluation suites use the established file classes:
 - `*.adversarial.yaml`
 - `*.rejection.yaml`
 
-These suites keep their existing wire-format field names for compatibility.
-That means some literal keys still use older names such as `contract`,
-`bundle`, and `expected.verdict: denied`. Treat those as stable fixture keys,
-not preferred prose.
+These suites keep established wire-format field names and expected values for
+compatibility. Treat those literals as stable fixture tokens, not preferred
+product wording.
 
 Each `*.fixtures.yaml` or `*.adversarial.yaml` file follows this structure:
 
@@ -115,7 +115,7 @@ They cover four additions: wildcard prefix support in `stage.tools`, the
 `terminal: true` stage primitive, MCP result evidence recording and the
 `mcp_result_matches(...)` gate condition, and `extends:` ruleset inheritance.
 
-## Shared Contract
+## Shared Expectations
 
 1. Fixtures are authoritative. If a fixture says a call is blocked, paused, or
    allowed, the implementation should match it.
@@ -123,4 +123,4 @@ They cover four additions: wildcard prefix support in `stage.tools`, the
 3. Rulesets embedded in fixtures should stay schema-valid.
 4. Workflow fixtures should assert stable public behavior, not SDK-internal
    helper structure.
-5. Adding or changing fixtures is a cross-repo contract change for the SDKs.
+5. Adding or changing fixtures is a cross-repo SDK behavior change.

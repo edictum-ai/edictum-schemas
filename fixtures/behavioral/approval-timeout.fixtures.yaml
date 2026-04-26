@@ -1,10 +1,10 @@
 suite: approval-timeout
 version: 1
-description: "Approval timeout behavior on precondition and sandbox contracts"
+description: "Approval timeout behavior on precondition and sandbox rules"
 
 fixtures:
   - id: "timeout-001"
-    description: "Approval timeout with deny effect denies the call"
+    description: "Approval timeout with block action blocks the call"
 
     contract:
       apiVersion: edictum/v1

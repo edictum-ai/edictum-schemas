@@ -1,6 +1,7 @@
 # Workflow v0.18 Fixtures
 
-Shared conformance fixtures for the four v0.18 shared-semantics additions.
+These fixtures prove behavioral conformance is the same across SDKs for the
+four v0.18 shared-semantics additions.
 
 Each file in this directory locks one semantic, keeping cases minimal and
 portable across Python, Go, and TypeScript runtimes.
@@ -20,8 +21,8 @@ Workflow fixture files follow the format documented in
 [`workflow/README.md`](../workflow/README.md).
 
 The `extends-inheritance` file adds a `rulesets:` top-level section, analogous
-to the `workflows:` section used by workflow fixture files. A fixture's
-`contract:` field may be either an inline Ruleset object or a string name
+to the `workflows:` section used by workflow fixture files. Its fixture
+document reference field may be either an inline Ruleset object or a string name
 referencing a named entry in `rulesets:`. Runtimes resolve the `extends:`
 field before evaluation.
 
@@ -57,9 +58,9 @@ Wildcards in `stage.tools` use fnmatch-style prefix patterns:
 A stage with `terminal: true`:
 
 - Has no implicit successor; the workflow ends when this stage is reached
-- If `tools` is omitted, all tool calls while in this stage are denied
+- If `tools` is omitted, all tool calls while in this stage are blocked
 - If `tools` is present, only those tools are allowed while the stage is active
 - Once the stage's `exit` conditions are met (or the stage has no `exit`),
-  any subsequent tool call is denied with a "workflow complete" reason
+  any subsequent tool call is blocked with a "workflow complete" reason
 - A prior no-exit stage that auto-advances into a terminal stage causes the
-  triggering call to be denied in the terminal stage context
+  triggering call to be blocked in the terminal stage context

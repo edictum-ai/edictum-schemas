@@ -1,12 +1,12 @@
 # Workflow Adapter Conformance Fixtures
 
-These fixtures define the adapter-level workflow behavior required by Spec 017
-P6.
+These fixtures prove behavioral conformance is the same across SDKs for the
+adapter-level Workflow Gate behavior required by Spec 017 P6.
 
 They extend the base workflow fixture model in
 [`../workflow/README.md`](../workflow/README.md) with approval loop inputs,
-non-tool stage-move operations, session lineage, and ordered audit-event
-expectations.
+non-tool stage-move operations, session lineage, evidence, reset-adjacent state
+updates, blocked actions, and ordered audit-event expectations.
 
 ## File Class
 

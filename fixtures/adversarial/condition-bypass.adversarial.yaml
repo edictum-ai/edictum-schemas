@@ -31,7 +31,7 @@ fixtures:
 
     expected:
       # String "99999" vs numeric gt:1000 — implementation must handle type mismatch
-      # Safest behavior: deny or error, never silently allow
+      # Safest behavior: block or error, never silently allow
       verdict: denied
       message_contains: "limit"
 

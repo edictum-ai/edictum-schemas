@@ -33,7 +33,7 @@ fixtures:
 
     expected:
       # Must complete without hanging. Exact verdict depends on regex timeout behavior.
-      # Implementations MUST either: deny (if regex matches before timeout),
+      # Implementations MUST either: block (if regex matches before timeout),
       # allow (if regex times out and defaults to no-match), or error (if regex aborted).
       # Must NOT hang indefinitely.
       verdict: allowed

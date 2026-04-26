@@ -1,6 +1,6 @@
 suite: postcondition-redact
 version: 1
-description: "Postcondition contracts that redact tool results"
+description: "Postcondition rules that redact tool results"
 
 fixtures:
   - id: "post-redact-001"

@@ -1,6 +1,6 @@
 suite: contract-structure
 version: 1
-description: "Contracts with structural errors — missing or invalid fields within individual contracts"
+description: "Rules with structural errors: missing or invalid fields within individual rules"
 
 fixtures:
   - id: "rej-010"
@@ -134,7 +134,7 @@ fixtures:
       error_contains: "type"
 
   - id: "rej-016"
-    description: "Pre contract missing tool field"
+    description: "Pre rule missing tool field"
     bundle:
       apiVersion: edictum/v1
       kind: Ruleset
@@ -155,7 +155,7 @@ fixtures:
       error_contains: "tool"
 
   - id: "rej-017"
-    description: "Pre contract missing when field"
+    description: "Pre rule missing when field"
     bundle:
       apiVersion: edictum/v1
       kind: Ruleset
@@ -175,7 +175,7 @@ fixtures:
       error_contains: "when"
 
   - id: "rej-018"
-    description: "Pre contract missing then field"
+    description: "Pre rule missing then field"
     bundle:
       apiVersion: edictum/v1
       kind: Ruleset
@@ -194,7 +194,7 @@ fixtures:
       error_contains: "then"
 
   - id: "rej-019"
-    description: "Pre contract then block missing effect"
+    description: "Pre rule then block missing effect"
     bundle:
       apiVersion: edictum/v1
       kind: Ruleset
@@ -215,7 +215,7 @@ fixtures:
       error_contains: "action"
 
   - id: "rej-020"
-    description: "Pre contract then block missing message"
+    description: "Pre rule then block missing message"
     bundle:
       apiVersion: edictum/v1
       kind: Ruleset
@@ -236,7 +236,7 @@ fixtures:
       error_contains: "message"
 
   - id: "rej-021"
-    description: "Post contract missing tool field"
+    description: "Post rule missing tool field"
     bundle:
       apiVersion: edictum/v1
       kind: Ruleset
@@ -257,7 +257,7 @@ fixtures:
       error_contains: "tool"
 
   - id: "rej-022"
-    description: "Post contract missing when field"
+    description: "Post rule missing when field"
     bundle:
       apiVersion: edictum/v1
       kind: Ruleset
@@ -277,7 +277,7 @@ fixtures:
       error_contains: "when"
 
   - id: "rej-023"
-    description: "Post contract missing then field"
+    description: "Post rule missing then field"
     bundle:
       apiVersion: edictum/v1
       kind: Ruleset
@@ -296,7 +296,7 @@ fixtures:
       error_contains: "then"
 
   - id: "rej-024"
-    description: "Session contract missing limits field"
+    description: "Session rule missing limits field"
     bundle:
       apiVersion: edictum/v1
       kind: Ruleset
@@ -315,7 +315,7 @@ fixtures:
       error_contains: "limits"
 
   - id: "rej-025"
-    description: "Session contract with empty limits object"
+    description: "Session rule with empty limits object"
     bundle:
       apiVersion: edictum/v1
       kind: Ruleset
@@ -335,7 +335,7 @@ fixtures:
       error_contains: "limits"
 
   - id: "rej-026"
-    description: "Session contract missing then field"
+    description: "Session rule missing then field"
     bundle:
       apiVersion: edictum/v1
       kind: Ruleset
@@ -353,7 +353,7 @@ fixtures:
       error_contains: "then"
 
   - id: "rej-027"
-    description: "Session contract then block missing message"
+    description: "Session rule then block missing message"
     bundle:
       apiVersion: edictum/v1
       kind: Ruleset
@@ -373,7 +373,7 @@ fixtures:
       error_contains: "message"
 
   - id: "rej-028"
-    description: "Sandbox contract missing both tool and tools fields"
+    description: "Sandbox rule missing both tool and tools fields"
     bundle:
       apiVersion: edictum/v1
       kind: Ruleset
@@ -392,7 +392,7 @@ fixtures:
       error_contains: "tool"
 
   - id: "rej-029"
-    description: "Sandbox contract missing both within and allows fields"
+    description: "Sandbox rule missing both within and allows fields"
     bundle:
       apiVersion: edictum/v1
       kind: Ruleset
@@ -410,7 +410,7 @@ fixtures:
       error_contains: "within"
 
   - id: "rej-030"
-    description: "Sandbox contract missing message field"
+    description: "Sandbox rule missing message field"
     bundle:
       apiVersion: edictum/v1
       kind: Ruleset
