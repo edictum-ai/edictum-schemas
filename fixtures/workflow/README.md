@@ -1,9 +1,11 @@
 # Workflow Conformance Fixtures
 
-These fixtures define shared, runtime-agnostic behavior for Spec 008 Workflow Gates.
+These fixtures prove behavioral conformance is the same across SDKs for Spec
+008 Workflow Gates.
 
 They are intended to be consumed by the Go, Python, and TypeScript SDKs so each
-runtime can prove the same stage, approval, and evidence semantics.
+runtime can prove the same stage progression, approval, evidence, reset, and
+blocked-action semantics.
 
 ## Format
 
@@ -77,7 +79,7 @@ Supported `execution` values:
 
 - `success`: the call executed successfully, so post-success evidence must be recorded
 - `error`: the call was allowed to execute but failed, so no new evidence may be recorded
-- `not_run`: the call was denied or paused before execution
+- `not_run`: the call was blocked or paused before execution
 
 Supported `expect.decision` values:
 

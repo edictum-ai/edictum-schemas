@@ -1,10 +1,10 @@
 suite: postcondition-deny
 version: 1
-description: "Postcondition contracts with deny effect"
+description: "Postcondition rules with block action"
 
 fixtures:
   - id: "post-deny-001"
-    description: "Postcondition deny blocks result from reaching the agent"
+    description: "Postcondition block keeps the result from reaching the agent"
 
     contract:
       apiVersion: edictum/v1
@@ -38,7 +38,7 @@ fixtures:
       message_contains: "too large"
 
   - id: "post-deny-002"
-    description: "Postcondition deny on error code pattern"
+    description: "Postcondition block on error code pattern"
 
     contract:
       apiVersion: edictum/v1

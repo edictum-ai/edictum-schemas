@@ -1,10 +1,10 @@
 suite: precondition-deny
 version: 1
-description: "Precondition contracts that deny tool calls"
+description: "Precondition rules that block tool calls"
 
 fixtures:
   - id: "pre-deny-001"
-    description: "Exact tool name match with contains condition triggers deny"
+    description: "Exact tool name match with contains condition triggers block"
 
     contract:
       apiVersion: edictum/v1
@@ -98,7 +98,7 @@ fixtures:
       message_contains: "/etc"
 
   - id: "pre-deny-004"
-    description: "Disabled contract does not trigger deny"
+    description: "Disabled rule does not trigger block"
 
     contract:
       apiVersion: edictum/v1

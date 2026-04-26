@@ -61,7 +61,7 @@ fixtures:
         command: "rm -rf /"
 
     expected:
-      # Must not crash — either deny (if prefix-matched) or allow (if no match)
+      # Must not crash: either block if prefix-matched or allow if no match
       # Implementation must handle safely; we accept either without crash
       verdict: allowed
 
@@ -92,6 +92,6 @@ fixtures:
         action: "delete"
 
     expected:
-      # Glob matches the prefix; implementation must still deny
+      # Glob matches the prefix; implementation must still block
       verdict: denied
       message_contains: "MCP deletes"

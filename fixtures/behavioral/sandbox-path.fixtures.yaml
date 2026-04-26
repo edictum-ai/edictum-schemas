@@ -1,6 +1,6 @@
 suite: sandbox-path
 version: 1
-description: "Sandbox contracts enforcing path boundaries"
+description: "Sandbox rules enforcing path boundaries"
 
 fixtures:
   - id: "sandbox-path-001"
@@ -30,7 +30,7 @@ fixtures:
       verdict: allowed
 
   - id: "sandbox-path-002"
-    description: "Path outside allowed directory is denied"
+    description: "Path outside allowed directory is blocked"
 
     contract:
       apiVersion: edictum/v1
@@ -57,7 +57,7 @@ fixtures:
       message_contains: "project directory"
 
   - id: "sandbox-path-003"
-    description: "Path with parent traversal escaping sandbox is denied"
+    description: "Path with parent traversal escaping sandbox is blocked"
 
     contract:
       apiVersion: edictum/v1

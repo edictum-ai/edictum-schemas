@@ -1,6 +1,6 @@
 suite: sandbox-multi-tool
 version: 1
-description: "Sandbox contracts using the tools (plural) selector"
+description: "Sandbox rules using the tools (plural) selector"
 
 fixtures:
   - id: "sandbox-multi-001"
@@ -89,5 +89,5 @@ fixtures:
         file_path: "/var/log/app.log"
 
     expected:
-      # outside:approve means out-of-bounds triggers approval flow, not immediate deny
+      # outside:approve means out-of-bounds triggers approval flow, not immediate block
       verdict: allowed

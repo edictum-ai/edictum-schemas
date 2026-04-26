@@ -1,10 +1,10 @@
 suite: precondition-allow
 version: 1
-description: "Precondition contracts that allow tool calls"
+description: "Precondition rules that allow tool calls"
 
 fixtures:
   - id: "pre-allow-001"
-    description: "Tool call with no matching contract is allowed"
+    description: "Tool call with no matching rule is allowed"
 
     contract:
       apiVersion: edictum/v1

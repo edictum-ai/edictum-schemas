@@ -1,10 +1,10 @@
 suite: approval-flows
 version: 1
-description: "Human-in-the-loop approval flows for pre and sandbox contracts"
+description: "Human-in-the-loop approval flows for pre and sandbox rules"
 
 fixtures:
   - id: "approval-001"
-    description: "Pre contract with approve effect triggers approval request"
+    description: "Pre rule with approve effect triggers approval request"
 
     contract:
       apiVersion: edictum/v1

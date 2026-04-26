@@ -4,7 +4,7 @@ description: "Observe mode logs but does not block tool calls"
 
 fixtures:
   - id: "observe-001"
-    description: "Contract in observe mode allows call that would be denied in enforce"
+    description: "Rule in observe mode allows a call that would be blocked in enforce"
 
     contract:
       apiVersion: edictum/v1
@@ -34,7 +34,7 @@ fixtures:
       audit_action: observed
 
   - id: "observe-002"
-    description: "Per-contract observe mode overrides enforce default"
+    description: "Per-rule observe mode overrides enforce default"
 
     contract:
       apiVersion: edictum/v1

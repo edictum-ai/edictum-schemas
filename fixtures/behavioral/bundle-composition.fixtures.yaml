@@ -1,10 +1,10 @@
 suite: bundle-composition
 version: 1
-description: "Multiple contracts in a single bundle — ordering, interaction, and mixed types"
+description: "Multiple rules in a single Ruleset: ordering, interaction, and mixed types"
 
 fixtures:
   - id: "bundle-001"
-    description: "First matching deny contract wins over later allow"
+    description: "First matching block rule wins over later allow"
 
     contract:
       apiVersion: edictum/v1
@@ -43,7 +43,7 @@ fixtures:
       message_contains: "rm -rf"
 
   - id: "bundle-002"
-    description: "Non-matching deny falls through to allow contract"
+    description: "Non-matching block falls through to allow rule"
 
     contract:
       apiVersion: edictum/v1
@@ -81,7 +81,7 @@ fixtures:
       verdict: allowed
 
   - id: "bundle-003"
-    description: "Mixed pre and post contracts in one bundle"
+    description: "Mixed pre and post rules in one Ruleset"
 
     contract:
       apiVersion: edictum/v1
@@ -123,7 +123,7 @@ fixtures:
       message_contains: "errors"
 
   - id: "bundle-004"
-    description: "Mixed pre + session contracts — session limit blocks even when pre allows"
+    description: "Mixed pre + session rules: session limit blocks even when pre allows"
 
     contract:
       apiVersion: edictum/v1
@@ -163,7 +163,7 @@ fixtures:
       message_contains: "limit"
 
   - id: "bundle-005"
-    description: "Mixed pre + sandbox contracts — sandbox restricts paths"
+    description: "Mixed pre + sandbox rules: sandbox restricts paths"
 
     contract:
       apiVersion: edictum/v1

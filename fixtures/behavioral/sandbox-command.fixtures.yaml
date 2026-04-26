@@ -1,6 +1,6 @@
 suite: sandbox-command
 version: 1
-description: "Sandbox contracts enforcing allowed commands"
+description: "Sandbox rules enforcing allowed commands"
 
 fixtures:
   - id: "sandbox-cmd-001"
@@ -37,7 +37,7 @@ fixtures:
       verdict: allowed
 
   - id: "sandbox-cmd-002"
-    description: "Command not in allows list is denied"
+    description: "Command not in allows list is blocked"
 
     contract:
       apiVersion: edictum/v1
@@ -71,7 +71,7 @@ fixtures:
       message_contains: "safe commands"
 
   - id: "sandbox-cmd-003"
-    description: "Piped command with disallowed segment is denied"
+    description: "Piped command with disallowed segment is blocked"
 
     contract:
       apiVersion: edictum/v1

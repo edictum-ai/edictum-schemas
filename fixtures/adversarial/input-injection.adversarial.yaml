@@ -4,7 +4,7 @@ description: "Adversarial inputs attempting injection through argument values"
 
 fixtures:
   - id: "adv-inject-001"
-    description: "YAML injection in argument value must not alter contract evaluation"
+    description: "YAML injection in argument value must not alter rule evaluation"
 
     contract:
       apiVersion: edictum/v1

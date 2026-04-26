@@ -1,6 +1,6 @@
 suite: session-advanced
 version: 1
-description: "Advanced session contract scenarios: max_attempts, combined limits, per-tool edge cases"
+description: "Advanced session rule scenarios: max_attempts, combined limits, per-tool edge cases"
 
 fixtures:
   - id: "session-adv-001"
@@ -134,7 +134,7 @@ fixtures:
       verdict: allowed
 
   - id: "session-adv-005"
-    description: "Session contract in observe mode does not block"
+    description: "Session rule in observe mode does not block"
 
     contract:
       apiVersion: edictum/v1

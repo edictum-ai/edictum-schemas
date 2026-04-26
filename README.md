@@ -1,31 +1,50 @@
 # edictum-schemas
 
-Single source of truth for the Edictum ruleset JSON Schema and shared conformance fixtures, consumed by the Python library ([edictum](https://pypi.org/project/edictum/)), TypeScript library (edictum-ts), and Go library (edictum-go).
+edictum-schemas is the shared schema and conformance source for Edictum's
+agency-control documents: Rulesets and Workflows.
+
+Edictum is the agency control layer for production AI agents. Agent frameworks
+build the agent. Edictum bounds the agency.
+
+Edictum turns documented agent profiles into executable runtime boundaries. It
+makes any agency level defensible; Medium Agency is the enterprise demand
+center right now, not the whole product.
+
+Rulesets are one primitive: they define single-call boundaries. Workflows define
+stage, order, evidence, and approval boundaries. Workflow Gates enforce ordered
+process with evidence and approvals. Together they make declared agent profiles
+executable across Python, TypeScript, and Go.
+
+Edictum measures behavioral conformance to a declared profile. It does not
+replace output-quality evals such as accuracy, relevance, coherence, or answer
+quality.
 
 ## Schema
 
-The schema defines the structure for Edictum YAML rulesets (`edictum/v1` `Ruleset`), including pre/post/session/sandbox rule types, expression operators, and observability configuration.
+The schema defines the structure for Edictum YAML Rulesets (`edictum/v1`
+`Ruleset`), including pre/post/session/sandbox rule types, expression
+operators, and observability configuration.
 
-**v2 schema** is the canonical schema and uses the new developer-friendly terminology:
-- `rules:` (was `contracts:`)
-- `action:` (was `effect:`)
-- `action: block` (was `effect: deny`)
-- `action: ask` (was `effect: approve`)
-- `kind: Ruleset` (was `kind: ContractBundle`)
+**v2 schema** is the canonical schema and uses the developer-facing terms:
+- `rules:`
+- `action:`
+- `action: block`
+- `action: ask`
+- `kind: Ruleset`
 
 `schemas/edictum-v2.schema.json` is the canonical file exported by this package and loaded by the Python helper.
 `schemas/edictum-v1.schema.json` is retained only as a deprecated compatibility alias for consumers that still reference the historical v1 schema identifier. SDK-level backward compatibility lives in the language implementations, not in a separate canonical v1 schema.
 
 ## Conformance Fixtures
 
+These fixtures prove behavioral conformance is the same across SDKs. They cover
+stage progression, approval, evidence, reset, and blocked actions.
+
 Shared workflow gate fixtures for Spec 008 live under
 [`fixtures/workflow/`](fixtures/workflow/README.md).
 
 Workflow-specific `coding-guard` fixtures for Spec 017 P7 live under
 [`fixtures/workflow-coding-guard/`](fixtures/workflow-coding-guard/README.md).
-
-These suites define implementation-agnostic stage progression, approval,
-evidence, and reset cases so each SDK can validate the same runtime semantics.
 
 ## Install
 

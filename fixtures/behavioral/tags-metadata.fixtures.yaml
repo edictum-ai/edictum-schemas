@@ -4,7 +4,7 @@ description: "Contract tags and then.metadata propagation to verdicts and audit"
 
 fixtures:
   - id: "tags-001"
-    description: "Tags from matching contract appear in verdict"
+    description: "Tags from matching rule appear in verdict"
 
     contract:
       apiVersion: edictum/v1

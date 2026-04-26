@@ -1,6 +1,6 @@
 suite: sandbox-domain
 version: 1
-description: "Sandbox contracts enforcing domain allowlists and blocklists"
+description: "Sandbox rules enforcing domain allowlists and blocklists"
 
 fixtures:
   - id: "sandbox-domain-001"
@@ -34,7 +34,7 @@ fixtures:
       verdict: allowed
 
   - id: "sandbox-domain-002"
-    description: "Request to disallowed domain is denied"
+    description: "Request to disallowed domain is blocked"
 
     contract:
       apiVersion: edictum/v1

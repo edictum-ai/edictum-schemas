@@ -1,6 +1,6 @@
 suite: postcondition-warn
 version: 1
-description: "Postcondition contracts that warn on tool results"
+description: "Postcondition rules that warn on tool results"
 
 fixtures:
   - id: "post-warn-001"

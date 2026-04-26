@@ -1,11 +1,12 @@
 # Workflow Coding-Guard Fixtures
 
-These fixtures define workflow-specific behavior for the Spec 017 P7
-`coding-guard` workflow.
+These fixtures prove behavioral conformance is the same across SDKs for the
+Spec 017 P7 `coding-guard` Workflow Gate.
 
 They reuse the shared workflow fixture model in
 [`../workflow/README.md`](../workflow/README.md) and add the minimum inputs
-needed to cover approval and operator reset behavior for this named workflow.
+needed to cover stage progression, approval, evidence, operator reset behavior,
+and blocked actions for this named workflow.
 
 ## File Class
 

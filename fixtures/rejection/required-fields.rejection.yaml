@@ -1,6 +1,6 @@
 suite: required-fields
 version: 1
-description: "Malformed bundles missing or corrupting required top-level fields"
+description: "Malformed Rulesets missing or corrupting required top-level fields"
 
 fixtures:
   - id: "rej-001"
@@ -108,7 +108,7 @@ fixtures:
       error_contains: "mode"
 
   - id: "rej-006"
-    description: "Empty contracts array"
+    description: "Empty rules array"
     bundle:
       apiVersion: edictum/v1
       kind: Ruleset
