@@ -83,3 +83,165 @@ fixtures:
     expected:
       verdict: denied
       message_contains: "project directory"
+
+  - id: "adv-sandbox-004"
+    description: "Path nested inside a dict arg must not be invisible to the sandbox"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: Ruleset
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      rules:
+        - id: sandbox-zone
+          type: sandbox
+          tool: "read_file"
+          within:
+            - "/tmp/safe-zone"
+          message: "path outside sandbox"
+
+    envelope:
+      tool_name: "read_file"
+      arguments:
+        file:
+          path: "/etc/passwd"
+
+    expected:
+      verdict: denied
+      message_contains: "path outside sandbox"
+
+  - id: "adv-sandbox-005"
+    description: "Paths inside list args must not be invisible to the sandbox"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: Ruleset
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      rules:
+        - id: sandbox-zone
+          type: sandbox
+          tool: "read_file"
+          within:
+            - "/tmp/safe-zone"
+          message: "path outside sandbox"
+
+    envelope:
+      tool_name: "read_file"
+      arguments:
+        paths: ["/etc/passwd", "/tmp/ok"]
+
+    expected:
+      verdict: denied
+      message_contains: "path outside sandbox"
+
+  - id: "adv-sandbox-006"
+    description: "Relative traversal in a command string must be resolved and checked"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: Ruleset
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      rules:
+        - id: sandbox-zone
+          type: sandbox
+          tool: "Bash"
+          within:
+            - "/tmp/safe-zone"
+          message: "path outside sandbox"
+
+    envelope:
+      tool_name: "Bash"
+      arguments:
+        command: "cat ../../etc/passwd"
+
+    expected:
+      verdict: denied
+      message_contains: "path outside sandbox"
+
+  - id: "adv-sandbox-007"
+    description: "Variable expansion in a command must fail closed, not skip the check"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: Ruleset
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      rules:
+        - id: sandbox-zone
+          type: sandbox
+          tool: "Bash"
+          within:
+            - "/tmp/safe-zone"
+          message: "path outside sandbox"
+
+    envelope:
+      tool_name: "Bash"
+      arguments:
+        command: "cat $HOME/.ssh/id_rsa"
+
+    expected:
+      verdict: denied
+
+  - id: "adv-sandbox-008"
+    description: "Tilde expansion in a command must be resolved and checked"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: Ruleset
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      rules:
+        - id: sandbox-zone
+          type: sandbox
+          tool: "Bash"
+          within:
+            - "/tmp/safe-zone"
+          message: "path outside sandbox"
+
+    envelope:
+      tool_name: "Bash"
+      arguments:
+        command: "cat ~/.ssh/id_rsa"
+
+    expected:
+      verdict: denied
+      message_contains: "path outside sandbox"
+
+  - id: "adv-sandbox-009"
+    description: "A command under a non-standard arg key (cmd) must still be checked"
+
+    contract:
+      apiVersion: edictum/v1
+      kind: Ruleset
+      metadata:
+        name: test-bundle
+      defaults:
+        mode: enforce
+      rules:
+        - id: sandbox-zone
+          type: sandbox
+          tool: "custom_tool"
+          within:
+            - "/tmp/safe-zone"
+          message: "path outside sandbox"
+
+    envelope:
+      tool_name: "custom_tool"
+      arguments:
+        cmd: "cat /etc/passwd"
+
+    expected:
+      verdict: denied
+      message_contains: "path outside sandbox"
