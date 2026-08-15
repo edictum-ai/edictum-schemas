@@ -28,8 +28,8 @@ jobs:
       # alias, so a malformed canonical schema shipped green.
       - name: Validate JSON Schema structure
         run: |
-          npx ajv-cli@5 compile -s schemas/edictum-v2.schema.json --spec=draft2020
-          npx ajv-cli@5 compile -s schemas/edictum-v1.schema.json --spec=draft2020
+          npx ajv-cli@5.0.0 compile -s schemas/edictum-v2.schema.json --spec=draft2020
+          npx ajv-cli@5.0.0 compile -s schemas/edictum-v1.schema.json --spec=draft2020
 
   test-python:
     runs-on: blacksmith-4vcpu-ubuntu-2404-arm

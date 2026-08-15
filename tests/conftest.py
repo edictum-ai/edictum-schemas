@@ -30,10 +30,12 @@ def pytest_configure(config: pytest.Config) -> None:
     )
 
 
-@pytest.hookimpl(hookwrapper=True)
+# wrapper=True (the current-style hook wrapper) instead of the deprecated
+# hookwrapper=True: CI installs an unpinned pytest, and the old protocol is
+# removed in pytest 9 — the guard must survive that upgrade.
+@pytest.hookimpl(wrapper=True)
 def pytest_runtest_makereport(item: pytest.Item, call: Any):
-    outcome = yield
-    report = outcome.get_result()
+    report = yield
     if report.skipped and item.get_closest_marker(_OPTIONAL_SKIP) is None:
         report.outcome = "failed"
         reason = report.longrepr[2] if isinstance(report.longrepr, tuple) else report.longrepr
@@ -43,3 +45,4 @@ def pytest_runtest_makereport(item: pytest.Item, call: Any):
             "An unmarked skip means a check silently stopped running. Install the "
             "missing dependency, or mark the test as legitimately optional."
         )
+    return report
