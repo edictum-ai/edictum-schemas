@@ -1,0 +1,519 @@
+{
+  "generated_by": "scripts/generate_fixture_manifest.py",
+  "note": "Generated file \u2014 do not edit by hand. Regenerate after any fixture change and commit the result; tests/test_fixture_manifest.py fails when this manifest and the fixture tree disagree.",
+  "suites": {
+    "adversarial": {
+      "files": {
+        "condition-bypass.adversarial.yaml": {
+          "fixture_ids": [
+            "adv-cond-001",
+            "adv-cond-002"
+          ],
+          "format_version": 1,
+          "sha256": "102faa8b12570f68e874f83388e824009a3d1ec1b653c83798f58c405d9349c8",
+          "suite": "condition-bypass"
+        },
+        "expression-abuse.adversarial.yaml": {
+          "fixture_ids": [
+            "adv-expr-001",
+            "adv-expr-002",
+            "adv-expr-003",
+            "adv-expr-004"
+          ],
+          "format_version": 1,
+          "sha256": "c14524f3940c6fa672f3d39a7541b02e16af504998883b79cb052b0608bbeb8c",
+          "suite": "expression-abuse"
+        },
+        "input-injection.adversarial.yaml": {
+          "fixture_ids": [
+            "adv-inject-001",
+            "adv-inject-002",
+            "adv-inject-003"
+          ],
+          "format_version": 1,
+          "sha256": "40935f0ce09f4870cc4a8f3eecae145fb57163e02669d36c19fc16cc75d7d3b0",
+          "suite": "input-injection"
+        },
+        "sandbox-escape.adversarial.yaml": {
+          "fixture_ids": [
+            "adv-sandbox-001",
+            "adv-sandbox-002",
+            "adv-sandbox-003"
+          ],
+          "format_version": 1,
+          "sha256": "fda69656da5a8928db99a6b0de77658712ccb901e9503ecd5337a7f90ba0752d",
+          "suite": "sandbox-escape"
+        },
+        "tool-name-bypass.adversarial.yaml": {
+          "fixture_ids": [
+            "adv-tool-001",
+            "adv-tool-002",
+            "adv-tool-003"
+          ],
+          "format_version": 1,
+          "sha256": "4103a39968558e8162fc32632624857f658bc23c309585d4b0bf05988f41bd91",
+          "suite": "tool-name-bypass"
+        }
+      },
+      "fixture_count": 15
+    },
+    "behavioral": {
+      "files": {
+        "approval-flows.fixtures.yaml": {
+          "fixture_ids": [
+            "approval-001",
+            "approval-002",
+            "approval-003",
+            "approval-004",
+            "approval-005"
+          ],
+          "format_version": 1,
+          "sha256": "a2147d5c1a37bcfa40835ec55312ef9937d7e0df509555afafb5edd29fbdfe1d",
+          "suite": "approval-flows"
+        },
+        "approval-timeout.fixtures.yaml": {
+          "fixture_ids": [
+            "timeout-001",
+            "timeout-002"
+          ],
+          "format_version": 1,
+          "sha256": "e868a43365533bd41e2a75ad751854945cbd07de7cfd29bc8004da0382904f35",
+          "suite": "approval-timeout"
+        },
+        "bundle-composition.fixtures.yaml": {
+          "fixture_ids": [
+            "bundle-001",
+            "bundle-002",
+            "bundle-003",
+            "bundle-004",
+            "bundle-005"
+          ],
+          "format_version": 1,
+          "sha256": "a2de0fa418347086e60f505f98237b4bca18257f76adcd266cd6c2c7c4560778",
+          "suite": "bundle-composition"
+        },
+        "expressions.fixtures.yaml": {
+          "fixture_ids": [
+            "expr-all-001",
+            "expr-all-002",
+            "expr-any-001",
+            "expr-any-002",
+            "expr-not-001",
+            "expr-not-002",
+            "expr-nested-001",
+            "expr-nested-002"
+          ],
+          "format_version": 1,
+          "sha256": "7992d639c8a5acc97d95ab104483e744e2a7fb7ced8fe39c8d69832fdd809c23",
+          "suite": "expressions"
+        },
+        "observe-mode.fixtures.yaml": {
+          "fixture_ids": [
+            "observe-001",
+            "observe-002",
+            "observe-003"
+          ],
+          "format_version": 1,
+          "sha256": "984ed5565836028cc971c466a3ddb8c5f563d3f5b6bd01303356ff5ba4eff8c5",
+          "suite": "observe-mode"
+        },
+        "operators.fixtures.yaml": {
+          "fixture_ids": [
+            "op-exists-true-001",
+            "op-exists-true-002",
+            "op-exists-false-001",
+            "op-equals-string-001",
+            "op-equals-string-002",
+            "op-equals-number-001",
+            "op-equals-bool-001",
+            "op-not-equals-001",
+            "op-not-equals-002",
+            "op-in-001",
+            "op-in-002",
+            "op-not-in-001",
+            "op-not-in-002",
+            "op-contains-001",
+            "op-contains-002",
+            "op-contains-any-001",
+            "op-contains-any-002",
+            "op-starts-with-001",
+            "op-starts-with-002",
+            "op-ends-with-001",
+            "op-ends-with-002",
+            "op-matches-001",
+            "op-matches-002",
+            "op-matches-any-001",
+            "op-matches-any-002",
+            "op-gt-001",
+            "op-gt-002",
+            "op-gte-001",
+            "op-gte-002",
+            "op-lt-001",
+            "op-lt-002",
+            "op-lte-001",
+            "op-lte-002"
+          ],
+          "format_version": 1,
+          "sha256": "589ae4b925f65c95f5304eb818c1c0ab80fc7e0605f8c04f789986626acaf1d0",
+          "suite": "operators"
+        },
+        "postcondition-deny.fixtures.yaml": {
+          "fixture_ids": [
+            "post-deny-001",
+            "post-deny-002"
+          ],
+          "format_version": 1,
+          "sha256": "0bc6399a035aea4961fdafb7c51de38f89d2eddb0cb5464b64a95964c0b22c17",
+          "suite": "postcondition-deny"
+        },
+        "postcondition-redact.fixtures.yaml": {
+          "fixture_ids": [
+            "post-redact-001",
+            "post-redact-002"
+          ],
+          "format_version": 1,
+          "sha256": "bdd12e338e3f20af987815a40e27e12be595201c1150450ceab026ab67618030",
+          "suite": "postcondition-redact"
+        },
+        "postcondition-warn.fixtures.yaml": {
+          "fixture_ids": [
+            "post-warn-001",
+            "post-warn-002",
+            "post-warn-003"
+          ],
+          "format_version": 1,
+          "sha256": "872bd4930c0cd9b907f054413f5874603b4a39360973de57b8d8ff954f2dde86",
+          "suite": "postcondition-warn"
+        },
+        "precondition-allow.fixtures.yaml": {
+          "fixture_ids": [
+            "pre-allow-001",
+            "pre-allow-002",
+            "pre-allow-003"
+          ],
+          "format_version": 1,
+          "sha256": "a1b0567f0c2f1276176f8ebc72aa1616d33435ba24132999b0cbf8e91c67e4e9",
+          "suite": "precondition-allow"
+        },
+        "precondition-deny.fixtures.yaml": {
+          "fixture_ids": [
+            "pre-deny-001",
+            "pre-deny-002",
+            "pre-deny-003",
+            "pre-deny-004"
+          ],
+          "format_version": 1,
+          "sha256": "cc8acbceb818f127c5a71de06c0e8498486d54335f1b0d324157906fa66edba9",
+          "suite": "precondition-deny"
+        },
+        "sandbox-command.fixtures.yaml": {
+          "fixture_ids": [
+            "sandbox-cmd-001",
+            "sandbox-cmd-002",
+            "sandbox-cmd-003"
+          ],
+          "format_version": 1,
+          "sha256": "5a8d5b3f97739c1eec3beb7e47780c46319bb4af12a5c52272b8b0598854f495",
+          "suite": "sandbox-command"
+        },
+        "sandbox-domain.fixtures.yaml": {
+          "fixture_ids": [
+            "sandbox-domain-001",
+            "sandbox-domain-002",
+            "sandbox-domain-003"
+          ],
+          "format_version": 1,
+          "sha256": "62b344473b981a05d372f0c40386ff3f0ffc226e5eca1372fb5f8e6e456a225e",
+          "suite": "sandbox-domain"
+        },
+        "sandbox-multi-tool.fixtures.yaml": {
+          "fixture_ids": [
+            "sandbox-multi-001",
+            "sandbox-multi-002",
+            "sandbox-multi-003"
+          ],
+          "format_version": 1,
+          "sha256": "4fb988d3b0b41e470ebae524b6a13e2c34fb24a3e166bdd265a229dc17ae4f03",
+          "suite": "sandbox-multi-tool"
+        },
+        "sandbox-path.fixtures.yaml": {
+          "fixture_ids": [
+            "sandbox-path-001",
+            "sandbox-path-002",
+            "sandbox-path-003",
+            "sandbox-path-004"
+          ],
+          "format_version": 1,
+          "sha256": "e02db329678f80b7eb7df890ecdc83dcc43cded680beb8a2743c67f0ef25ab1f",
+          "suite": "sandbox-path"
+        },
+        "selectors.fixtures.yaml": {
+          "fixture_ids": [
+            "sel-args-001",
+            "sel-args-nested-001",
+            "sel-result-001",
+            "sel-env-001",
+            "sel-env-002",
+            "sel-principal-001",
+            "sel-principal-002",
+            "sel-metadata-001",
+            "sel-metadata-002"
+          ],
+          "format_version": 1,
+          "sha256": "ca1c8a64283264298415d8b5e6f650c8b46656c18debbb3665f90c25005e7a83",
+          "suite": "selectors"
+        },
+        "session-advanced.fixtures.yaml": {
+          "fixture_ids": [
+            "session-adv-001",
+            "session-adv-002",
+            "session-adv-003",
+            "session-adv-004",
+            "session-adv-005"
+          ],
+          "format_version": 1,
+          "sha256": "57f103d124c6fee993207d230408e5041245ca185a07a4f192e5c8bb5c494833",
+          "suite": "session-advanced"
+        },
+        "session-limits.fixtures.yaml": {
+          "fixture_ids": [
+            "session-001",
+            "session-002",
+            "session-003"
+          ],
+          "format_version": 1,
+          "sha256": "a3b5f06e4ed04c777a3619d75c01b6e4b8f41b670b7efbed9cd3204553775986",
+          "suite": "session-limits"
+        },
+        "tags-metadata.fixtures.yaml": {
+          "fixture_ids": [
+            "tags-001",
+            "tags-002"
+          ],
+          "format_version": 1,
+          "sha256": "f08223ae6f952deda33a8af7782b535fa6231d3c4d66aacd8fca5c033c0dc841",
+          "suite": "tags-metadata"
+        },
+        "tool-definitions.fixtures.yaml": {
+          "fixture_ids": [
+            "tooldef-001",
+            "tooldef-002"
+          ],
+          "format_version": 1,
+          "sha256": "594368287560f43c5dd480e2060916e9a4f6a580a9c814a5500d6fd3753f9974",
+          "suite": "tool-definitions"
+        },
+        "wildcard-matching.fixtures.yaml": {
+          "fixture_ids": [
+            "wildcard-001",
+            "wildcard-002",
+            "wildcard-003"
+          ],
+          "format_version": 1,
+          "sha256": "632186ac47e02dff968f34e3f8349c74e7382c48785a162dec712e82d36deafe",
+          "suite": "wildcard-matching"
+        }
+      },
+      "fixture_count": 107
+    },
+    "rejection": {
+      "files": {
+        "constraints.rejection.yaml": {
+          "fixture_ids": [
+            "rej-060",
+            "rej-061",
+            "rej-062"
+          ],
+          "format_version": 1,
+          "sha256": "910456417354dcdc53526871970f59706787227cb31e493cfcfadf741db8f612",
+          "suite": "constraints"
+        },
+        "contract-structure.rejection.yaml": {
+          "fixture_ids": [
+            "rej-010",
+            "rej-011",
+            "rej-012",
+            "rej-013",
+            "rej-014",
+            "rej-015",
+            "rej-016",
+            "rej-017",
+            "rej-018",
+            "rej-019",
+            "rej-020",
+            "rej-021",
+            "rej-022",
+            "rej-023",
+            "rej-024",
+            "rej-025",
+            "rej-026",
+            "rej-027",
+            "rej-028",
+            "rej-029",
+            "rej-030"
+          ],
+          "format_version": 1,
+          "sha256": "980837a92ecaaf6d2594ad0b45d854ff056339c0558eb86623943b6af9b5c109",
+          "suite": "contract-structure"
+        },
+        "effect-enums.rejection.yaml": {
+          "fixture_ids": [
+            "rej-040",
+            "rej-041",
+            "rej-042",
+            "rej-043",
+            "rej-044"
+          ],
+          "format_version": 1,
+          "sha256": "a6b0468340ba9d7b061bc55c3853af4f4caae55bec7653557024f33dfc6f8f9e",
+          "suite": "effect-enums"
+        },
+        "expression-shapes.rejection.yaml": {
+          "fixture_ids": [
+            "rej-050",
+            "rej-051",
+            "rej-052",
+            "rej-053",
+            "rej-054"
+          ],
+          "format_version": 1,
+          "sha256": "9ca842eb472273788e9017fc16439e0e60ff18fa580823b28e655711615b78f4",
+          "suite": "expression-shapes"
+        },
+        "required-fields.rejection.yaml": {
+          "fixture_ids": [
+            "rej-001",
+            "rej-002",
+            "rej-003",
+            "rej-004",
+            "rej-005",
+            "rej-006",
+            "rej-007",
+            "rej-008"
+          ],
+          "format_version": 1,
+          "sha256": "607108c44e3e6bbcc1ee6546d0cd2a01d909b08c2b69083781f9f26ae7692482",
+          "suite": "required-fields"
+        }
+      },
+      "fixture_count": 42
+    },
+    "workflow": {
+      "files": {
+        "core.workflow.yaml": {
+          "fixture_ids": [
+            "wf-001",
+            "wf-002",
+            "wf-003",
+            "wf-004",
+            "wf-005",
+            "wf-006",
+            "wf-007",
+            "wf-008",
+            "wf-009",
+            "wf-010"
+          ],
+          "format_version": 1,
+          "sha256": "cf3fa93660f7223286e8d8e570cc855cd6f4456306b40cf601040a0155543127",
+          "suite": "workflow-core"
+        }
+      },
+      "fixture_count": 10
+    },
+    "workflow-adapter-conformance": {
+      "files": {
+        "core.workflow-adapter.yaml": {
+          "fixture_ids": [
+            "wac-001",
+            "wac-002",
+            "wac-003",
+            "wac-004",
+            "wac-005",
+            "wac-006",
+            "wac-007",
+            "wac-008"
+          ],
+          "format_version": 2,
+          "sha256": "1f10a79f7ec23bf2fd3698a3246713db15f97713233d98d3b9b5b2f65843767a",
+          "suite": "workflow-adapter-conformance-core"
+        }
+      },
+      "fixture_count": 8
+    },
+    "workflow-coding-guard": {
+      "files": {
+        "core.workflow-coding-guard.yaml": {
+          "fixture_ids": [
+            "wcg-001",
+            "wcg-002",
+            "wcg-003",
+            "wcg-004",
+            "wcg-005",
+            "wcg-006"
+          ],
+          "format_version": 1,
+          "sha256": "bf4dafba1cca2045f8a54a1c65e47b7c4a21316290bd22a85bc853d70884e695",
+          "suite": "workflow-coding-guard-core"
+        }
+      },
+      "fixture_count": 6
+    },
+    "workflow-v0.18": {
+      "files": {
+        "extends-inheritance.workflow-v0.18.yaml": {
+          "fixture_ids": [
+            "ex-001",
+            "ex-002",
+            "ex-003",
+            "ex-004",
+            "ex-005"
+          ],
+          "format_version": 1,
+          "sha256": "239282897eff800217a2bca1e4332197f99633f1cc1ac11cd94b2adc36024dc4",
+          "suite": "workflow-v0.18-extends-inheritance"
+        },
+        "mcp-result-evidence.workflow-v0.18.yaml": {
+          "fixture_ids": [
+            "mr-001",
+            "mr-002",
+            "mr-003",
+            "mr-004",
+            "mr-005"
+          ],
+          "format_version": 1,
+          "sha256": "482f1b4e8a7a616df532694e712771ede0e9aa33ca94e01b24a94db415e5d06d",
+          "suite": "workflow-v0.18-mcp-result-evidence"
+        },
+        "terminal-stage.workflow-v0.18.yaml": {
+          "fixture_ids": [
+            "ts-001",
+            "ts-002",
+            "ts-003",
+            "ts-004"
+          ],
+          "format_version": 1,
+          "sha256": "0003c87caaa7b2827c3df122b549e7f360ad51883fee926b7a7795db9aa6bba8",
+          "suite": "workflow-v0.18-terminal-stage"
+        },
+        "wildcard-tools.workflow-v0.18.yaml": {
+          "fixture_ids": [
+            "wt-001",
+            "wt-002",
+            "wt-003",
+            "wt-004"
+          ],
+          "format_version": 1,
+          "sha256": "8ce569ab7944881bdbef66234ed409a3be3f15faed680e39653d91a1a33bd142",
+          "suite": "workflow-v0.18-wildcard-tools"
+        }
+      },
+      "fixture_count": 18
+    }
+  },
+  "totals": {
+    "directories": 7,
+    "files": 38,
+    "fixtures": 206
+  },
+  "version": 1
+}

@@ -34,5 +34,8 @@ jobs:
 
       - uses: astral-sh/setup-uv@0c5e2b8115b80b4c7c5ddf6ffdd634974642d182 # v4
 
+      # pyyaml is required, not optional: without it every test that reads
+      # fixture content skipped silently and the suite still reported green.
+      # tests/conftest.py fails the run if anything skips unexpectedly.
       - name: Run tests
-        run: uv run --with pytest pytest tests/ -v
+        run: uv run --with pytest --with pyyaml pytest tests/ -v -rs
