@@ -111,6 +111,17 @@ def test_empty_when_latest_breaks_fails(tmp_path: Path, value: object) -> None:
         chk.check_paths(record_path, policy_path, today=today)
 
 
+@pytest.mark.parametrize("value", [None, "", "   "])
+def test_empty_owner_mapping_fails(tmp_path: Path, value: object) -> None:
+    record_path, policy_path = _copy_record(tmp_path)
+    today = _record_today(record_path)
+    data = json.loads(record_path.read_text(encoding="utf-8"))
+    data["owners"]["python"] = value
+    record_path.write_text(json.dumps(data), encoding="utf-8")
+    with pytest.raises(chk.RecordError, match=r"owners\['python'\] must be a non-empty string"):
+        chk.check_paths(record_path, policy_path, today=today)
+
+
 def test_seamed_adapter_null_floor_fails(tmp_path: Path) -> None:
     record_path, policy_path = _copy_record(tmp_path)
     today = _record_today(record_path)

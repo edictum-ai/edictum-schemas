@@ -138,6 +138,9 @@ def check_record_shape(record: dict[str, Any]) -> None:
     owners = record["owners"]
     if not isinstance(owners, dict):
         raise RecordError("owners must be an object")
+    for language, owner in owners.items():
+        if not isinstance(owner, str) or not owner.strip():
+            raise RecordError(f"owners[{language!r}] must be a non-empty string")
     seen: set[str] = set()
     for adapter in adapters:
         if not isinstance(adapter, dict):
