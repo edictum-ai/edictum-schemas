@@ -127,6 +127,9 @@ def check_record_shape(record: dict[str, Any]) -> None:
     missing = [k for k in REQUIRED_TOP_LEVEL if k not in record]
     if missing:
         raise RecordError(f"record missing top-level keys: {missing}")
+    when_latest_breaks = record["when_latest_breaks"]
+    if not isinstance(when_latest_breaks, str) or not when_latest_breaks.strip():
+        raise RecordError("when_latest_breaks must be a non-empty string")
     if record["cadence"] != "weekly":
         raise RecordError(f"cadence must be 'weekly', got {record['cadence']!r}")
     adapters = record["adapters"]
