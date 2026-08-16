@@ -172,3 +172,27 @@ def test_blank_line_mid_table_keeps_later_rows(tmp_path: Path) -> None:
     needle = "| crewai |"
     policy_path.write_text(policy.replace(needle, "\n" + needle, 1), encoding="utf-8")
     chk.check_paths(record_path, policy_path, today=today)
+
+@pytest.mark.parametrize(
+    ("old", "new", "match"),
+    [
+        ("Cadence: weekly", "Cadence: monthly", "cadence"),
+        ("python / ts / go", "python / rust / go", "owner_summary"),
+        (
+            "flip the smoke-matrix row for that published version "
+            "(mark unsupported, drop it, or raise floor). A red CI job is not the record.",
+            "page the on-call and hope.",
+            "when_latest_breaks",
+        ),
+    ],
+)
+def test_policy_metadata_disagreement_fails(tmp_path: Path, old: str, new: str, match: str) -> None:
+    record_path, policy_path = _copy_record(tmp_path)
+    today = _record_today(record_path)
+    policy = policy_path.read_text(encoding="utf-8")
+    if old not in policy:
+        raise AssertionError(f"fixture policy missing {old!r}")
+    policy_path.write_text(policy.replace(old, new, 1), encoding="utf-8")
+    with pytest.raises(chk.RecordError, match=match):
+        chk.check_paths(record_path, policy_path, today=today)
+

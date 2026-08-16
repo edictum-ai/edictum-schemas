@@ -200,5 +200,5 @@
     "typescript": "ts",
     "go": "go"
   },
-  "when_latest_breaks": "matrix row flips (unsupported/drop/raise floor); CI red is not the record"
+  "when_latest_breaks": "flip the smoke-matrix row for that published version (mark unsupported, drop it, or raise floor). A red CI job is not the record."
 }

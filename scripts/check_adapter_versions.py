@@ -215,7 +215,61 @@ def check_measured_at(record: dict[str, Any], *, today: date | None = None) -> N
         )
 
 
-def check_copies_agree(record: dict[str, Any], table_rows: list[dict[str, str]]) -> None:
+def parse_markdown_metadata(markdown: str) -> dict[str, str]:
+    """Read cadence, owner summary, and break-response from the policy prose."""
+    cadence = ""
+    owner_summary = ""
+    when_latest_breaks = ""
+    for line in markdown.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("Cadence:"):
+            rest = stripped[len("Cadence:") :].strip()
+            cadence_part, sep, owner_part = rest.partition("Owner:")
+            cadence = cadence_part.strip().rstrip(".")
+            if sep:
+                owner_raw = owner_part.strip()
+                if "(" in owner_raw:
+                    owner_raw = owner_raw.split("(", 1)[0]
+                owner_summary = owner_raw.strip().rstrip(".")
+        elif stripped.startswith("When latest breaks:"):
+            when_latest_breaks = stripped.split(":", 1)[1].strip()
+    missing = [
+        name
+        for name, value in (
+            ("cadence", cadence),
+            ("owner summary", owner_summary),
+            ("when latest breaks", when_latest_breaks),
+        )
+        if not value
+    ]
+    if missing:
+        raise RecordError(f"policy markdown missing metadata: {missing}")
+    return {
+        "cadence": cadence,
+        "owner_summary": owner_summary,
+        "when_latest_breaks": when_latest_breaks,
+    }
+
+
+def check_copies_agree(
+    record: dict[str, Any],
+    table_rows: list[dict[str, str]],
+    markdown: str,
+) -> None:
+    meta = parse_markdown_metadata(markdown)
+    expected_meta = {
+        "cadence": record["cadence"],
+        "owner_summary": " / ".join(record["owners"].values()),
+        "when_latest_breaks": record["when_latest_breaks"],
+    }
+    if meta != expected_meta:
+        diffs = [k for k in expected_meta if meta[k] != expected_meta[k]]
+        md_bits = {k: meta[k] for k in diffs}
+        js_bits = {k: expected_meta[k] for k in diffs}
+        raise RecordError(
+            f"policy metadata disagrees on {diffs}. "
+            f"markdown={md_bits} json={js_bits}"
+        )
     adapters = record["adapters"]
     owners: dict[str, str] = record["owners"]
     json_ids = [a["id"] for a in adapters]
@@ -258,8 +312,9 @@ def check_paths(
     record = load_record(record_path)
     check_record_shape(record)
     check_measured_at(record, today=today)
-    table_rows = parse_markdown_table(policy_path.read_text(encoding="utf-8"))
-    check_copies_agree(record, table_rows)
+    markdown = policy_path.read_text(encoding="utf-8")
+    table_rows = parse_markdown_table(markdown)
+    check_copies_agree(record, table_rows, markdown)
     return record
 
 
