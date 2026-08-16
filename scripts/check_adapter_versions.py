@@ -56,8 +56,10 @@ NULLABLE_ADAPTER = (
 # Adapters with a native seam must keep both version fields as non-empty
 # strings and unsupported_below equal to floor. Nulls are allowed only on
 # this explicit no-seam set, and only when first_seam_version and floor
-# are null together; those records keep an explanatory unsupported_below.
+# are null together; those records must use the canonical
+# unsupported_below token (NO_NATIVE_SEAM_UNSUPPORTED_BELOW).
 NO_NATIVE_SEAM_ADAPTERS = frozenset({"langchaingo"})
+NO_NATIVE_SEAM_UNSUPPORTED_BELOW = "all (no native block seam)"
 TABLE_FIELDS = ("id", "owner", "package", "seam", "first", "floor", "latest", "evidence")
 WEEKLY_MAX_AGE_DAYS = 7
 
@@ -180,6 +182,13 @@ def check_record_shape(record: dict[str, Any]) -> None:
                     f"{adapter_id}: first_seam_version and floor may be null "
                     "only for adapters without a native seam"
                 )
+            unsupported_below = adapter["unsupported_below"]
+            if unsupported_below != NO_NATIVE_SEAM_UNSUPPORTED_BELOW:
+                raise RecordError(
+                    f"{adapter_id}: unsupported_below must be "
+                    f"{NO_NATIVE_SEAM_UNSUPPORTED_BELOW!r} for adapters "
+                    f"without a native seam, got {unsupported_below!r}"
+                )
         else:
             for key in NULLABLE_ADAPTER:
                 value = adapter[key]
@@ -208,10 +217,10 @@ def check_measured_at(record: dict[str, Any], *, today: date | None = None) -> N
     if measured > today:
         raise RecordError(f"measured_at {measured.isoformat()} is in the future")
     age = (today - measured).days
-    if age > WEEKLY_MAX_AGE_DAYS:
+    if age >= WEEKLY_MAX_AGE_DAYS:
         raise RecordError(
             f"measured_at {measured.isoformat()} is {age} days old; "
-            f"weekly cadence allows at most {WEEKLY_MAX_AGE_DAYS} days"
+            f"weekly cadence is stale at {WEEKLY_MAX_AGE_DAYS} days"
         )
 
 
