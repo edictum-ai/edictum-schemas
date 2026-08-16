@@ -5,6 +5,9 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  schedule:
+    # Weekly freshness: measured_at must not go stale during inactivity.
+    - cron: "17 6 * * 1"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

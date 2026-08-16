@@ -34,6 +34,11 @@ def _copy_record(tmp_path: Path) -> tuple[Path, Path]:
     return record_path, policy_path
 
 
+def _record_today(record_path: Path) -> date:
+    data = json.loads(record_path.read_text(encoding="utf-8"))
+    return date.fromisoformat(data["measured_at"])
+
+
 def test_committed_record_is_valid() -> None:
     chk.check_paths(chk.RECORD_PATH, chk.POLICY_PATH)
 
@@ -68,7 +73,28 @@ def test_fresh_measured_at_passes(tmp_path: Path) -> None:
 
 def test_disagreement_fails(tmp_path: Path) -> None:
     record_path, policy_path = _copy_record(tmp_path)
+    today = _record_today(record_path)
     policy = policy_path.read_text(encoding="utf-8")
     policy_path.write_text(policy.replace("| 1.3.15 |", "| 9.9.9 |", 1), encoding="utf-8")
     with pytest.raises(chk.RecordError, match="disagree"):
-        chk.check_paths(record_path, policy_path, today=date(2026, 8, 16))
+        chk.check_paths(record_path, policy_path, today=today)
+
+
+def test_null_required_adapter_field_fails(tmp_path: Path) -> None:
+    record_path, policy_path = _copy_record(tmp_path)
+    today = _record_today(record_path)
+    data = json.loads(record_path.read_text(encoding="utf-8"))
+    data["adapters"][0]["latest_inspected"] = None
+    record_path.write_text(json.dumps(data), encoding="utf-8")
+    with pytest.raises(chk.RecordError, match="latest_inspected must be a non-empty string"):
+        chk.check_paths(record_path, policy_path, today=today)
+
+
+def test_empty_required_adapter_field_fails(tmp_path: Path) -> None:
+    record_path, policy_path = _copy_record(tmp_path)
+    today = _record_today(record_path)
+    data = json.loads(record_path.read_text(encoding="utf-8"))
+    data["adapters"][0]["package"] = "   "
+    record_path.write_text(json.dumps(data), encoding="utf-8")
+    with pytest.raises(chk.RecordError, match="package must be a non-empty string"):
+        chk.check_paths(record_path, policy_path, today=today)

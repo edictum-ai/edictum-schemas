@@ -40,6 +40,19 @@ REQUIRED_ADAPTER = (
     "unsupported_below",
     "notes",
 )
+# Universally required values. first_seam_version and floor may be null for
+# adapters without a native seam (LangChainGo).
+REQUIRED_ADAPTER_NONEMPTY = (
+    "package",
+    "seam",
+    "latest_inspected",
+    "unsupported_below",
+    "notes",
+)
+NULLABLE_ADAPTER = (
+    "first_seam_version",
+    "floor",
+)
 TABLE_FIELDS = ("id", "owner", "package", "seam", "first", "floor", "latest", "evidence")
 WEEKLY_MAX_AGE_DAYS = 7
 
@@ -135,6 +148,16 @@ def check_record_shape(record: dict[str, Any]) -> None:
         evidence = adapter["first_seam_evidence"]
         if not isinstance(evidence, str) or not evidence.strip():
             raise RecordError(f"{adapter_id}: first_seam_evidence must be a non-empty string")
+        for key in REQUIRED_ADAPTER_NONEMPTY:
+            value = adapter[key]
+            if not isinstance(value, str) or not value.strip():
+                raise RecordError(f"{adapter_id}: {key} must be a non-empty string")
+        for key in NULLABLE_ADAPTER:
+            value = adapter[key]
+            if value is not None and (not isinstance(value, str) or not value.strip()):
+                raise RecordError(
+                    f"{adapter_id}: {key} must be a non-empty string or null"
+                )
 
 
 def check_measured_at(record: dict[str, Any], *, today: date | None = None) -> None:
