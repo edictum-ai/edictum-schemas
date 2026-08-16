@@ -11,5 +11,5 @@ repos:
         name: validate adapter version record
         entry: python3 scripts/check_adapter_versions.py
         language: system
-        files: ^(invariants/ADAPTER_VERSION_POLICY\.md|invariants/adapter-versions\.json)$
+        files: ^(invariants/ADAPTER_VERSION_POLICY\.md|invariants/adapter-versions\.json|scripts/check_adapter_versions\.py)$
         pass_filenames: false

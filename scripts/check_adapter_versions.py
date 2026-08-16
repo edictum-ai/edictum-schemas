@@ -40,8 +40,8 @@ REQUIRED_ADAPTER = (
     "unsupported_below",
     "notes",
 )
-# Universally required values. first_seam_version and floor may be null for
-# adapters without a native seam (LangChainGo).
+# Universally required values. first_seam_version and floor may be null
+# together only for an explicit no-seam adapter (LangChainGo).
 REQUIRED_ADAPTER_NONEMPTY = (
     "package",
     "seam",
@@ -53,6 +53,10 @@ NULLABLE_ADAPTER = (
     "first_seam_version",
     "floor",
 )
+# Adapters with a native seam must keep both version fields as non-empty
+# strings. Nulls are allowed only on this explicit no-seam set, and only
+# when first_seam_version and floor are null together.
+NO_NATIVE_SEAM_ADAPTERS = frozenset({"langchaingo"})
 TABLE_FIELDS = ("id", "owner", "package", "seam", "first", "floor", "latest", "evidence")
 WEEKLY_MAX_AGE_DAYS = 7
 
@@ -78,7 +82,9 @@ def parse_markdown_table(markdown: str) -> list[dict[str, str]]:
     for line in markdown.splitlines():
         stripped = line.strip()
         if not stripped.startswith("|"):
-            if header is not None:
+            # Skip blank lines so a mid-table empty line does not silently
+            # drop the remaining rows and surface as an id-order mismatch.
+            if header is not None and stripped:
                 break
             continue
         cells = [c.strip() for c in stripped.strip("|").split("|")]
@@ -152,12 +158,28 @@ def check_record_shape(record: dict[str, Any]) -> None:
             value = adapter[key]
             if not isinstance(value, str) or not value.strip():
                 raise RecordError(f"{adapter_id}: {key} must be a non-empty string")
-        for key in NULLABLE_ADAPTER:
-            value = adapter[key]
-            if value is not None and (not isinstance(value, str) or not value.strip()):
+        first = adapter["first_seam_version"]
+        floor = adapter["floor"]
+        first_null = first is None
+        floor_null = floor is None
+        if first_null != floor_null:
+            raise RecordError(
+                f"{adapter_id}: first_seam_version and floor must both be null "
+                "or both be non-empty strings"
+            )
+        if first_null:
+            if adapter_id not in NO_NATIVE_SEAM_ADAPTERS:
                 raise RecordError(
-                    f"{adapter_id}: {key} must be a non-empty string or null"
+                    f"{adapter_id}: first_seam_version and floor may be null "
+                    "only for adapters without a native seam"
                 )
+        else:
+            for key in NULLABLE_ADAPTER:
+                value = adapter[key]
+                if not isinstance(value, str) or not value.strip():
+                    raise RecordError(
+                        f"{adapter_id}: {key} must be a non-empty string"
+                    )
 
 
 def check_measured_at(record: dict[str, Any], *, today: date | None = None) -> None:

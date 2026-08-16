@@ -98,3 +98,43 @@ def test_empty_required_adapter_field_fails(tmp_path: Path) -> None:
     record_path.write_text(json.dumps(data), encoding="utf-8")
     with pytest.raises(chk.RecordError, match="package must be a non-empty string"):
         chk.check_paths(record_path, policy_path, today=today)
+
+
+def test_seamed_adapter_null_floor_fails(tmp_path: Path) -> None:
+    record_path, policy_path = _copy_record(tmp_path)
+    today = _record_today(record_path)
+    data = json.loads(record_path.read_text(encoding="utf-8"))
+    seamed = next(a for a in data["adapters"] if a["id"] != "langchaingo")
+    seamed["floor"] = None
+    record_path.write_text(json.dumps(data), encoding="utf-8")
+    with pytest.raises(chk.RecordError, match="first_seam_version and floor"):
+        chk.check_paths(record_path, policy_path, today=today)
+
+
+def test_seamed_adapter_both_null_versions_fail(tmp_path: Path) -> None:
+    record_path, policy_path = _copy_record(tmp_path)
+    today = _record_today(record_path)
+    data = json.loads(record_path.read_text(encoding="utf-8"))
+    seamed = next(a for a in data["adapters"] if a["id"] != "langchaingo")
+    seamed["first_seam_version"] = None
+    seamed["floor"] = None
+    record_path.write_text(json.dumps(data), encoding="utf-8")
+    with pytest.raises(chk.RecordError, match="without a native seam"):
+        chk.check_paths(record_path, policy_path, today=today)
+
+
+def test_langchaingo_null_versions_pass() -> None:
+    record = json.loads(chk.RECORD_PATH.read_text(encoding="utf-8"))
+    go = next(a for a in record["adapters"] if a["id"] == "langchaingo")
+    assert go["first_seam_version"] is None
+    assert go["floor"] is None
+    chk.check_paths(chk.RECORD_PATH, chk.POLICY_PATH)
+
+
+def test_blank_line_mid_table_keeps_later_rows(tmp_path: Path) -> None:
+    record_path, policy_path = _copy_record(tmp_path)
+    today = _record_today(record_path)
+    policy = policy_path.read_text(encoding="utf-8")
+    needle = "| crewai |"
+    policy_path.write_text(policy.replace(needle, "\n" + needle, 1), encoding="utf-8")
+    chk.check_paths(record_path, policy_path, today=today)
