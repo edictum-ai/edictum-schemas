@@ -44,11 +44,11 @@
       "package": "semantic-kernel",
       "seam": "FilterTypes.AUTO_FUNCTION_INVOCATION",
       "first_seam_version": "1.0.0",
-      "first_seam_evidence": "pypi semantic_kernel-1.0.0-py3-none-any.whl :: semantic_kernel/filters/filter_types.py:14 AUTO_FUNCTION_INVOCATION = auto_function_invocation. Also kernel_filters_extension.py ALLOWED_FILTERS_LITERAL includes FilterTypes.AUTO_FUNCTION_INVOCATION.",
+      "first_seam_evidence": "pypi semantic_kernel-1.0.0-py3-none-any.whl :: semantic_kernel/filters/filter_types.py:14 AUTO_FUNCTION_INVOCATION = auto_function_invocation. Also kernel_filters_extension.py ALLOWED_FILTERS_LITERAL includes FilterTypes.AUTO_FUNCTION_INVOCATION. Predecessor semantic_kernel-0.9.9b1-py3-none-any.whl (last 0.x on PyPI) has no semantic_kernel/filters/ directory and zero AUTO_FUNCTION_INVOCATION hits. 1.0.0rc1 already has filter_types.py:14 AUTO_FUNCTION_INVOCATION; first stable publish is 1.0.0.",
       "floor": "1.0.0",
       "latest_inspected": "1.44.1",
       "unsupported_below": "1.0.0",
-      "notes": "Opened 1.0.0 and 1.44.1 wheels. 1.0.0 is the first 1.x publish we inspected; seam still present in 1.44.1 filter_types.py:11."
+      "notes": "Opened 0.9.9b1, 1.0.0rc1, 1.0.0, and 1.44.1 wheels. Last 0.x (0.9.9b1) has no native filter seam. Seam first appears in 1.0.0rc1; first stable is 1.0.0. Seam still present in 1.44.1 filter_types.py:11."
     },
     {
       "id": "openai-agents-py",
