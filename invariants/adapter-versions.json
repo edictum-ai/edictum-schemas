@@ -95,8 +95,8 @@
       "floor": "0.3.233",
       "latest_inspected": "0.3.233",
       "unsupported_below": "0.3.233",
-      "first_seam_evidence": "opened 0.0.4 and 0.3.233 tarballs",
-      "notes": "first symbols 0.0.4; supported floor 0.3.233 verified native contract; latest 0.3.233"
+      "first_seam_evidence": "@anthropic-ai/claude-agent-sdk 0.0.4 :: package/sdkTypes.d.ts:120 export type CanUseTool; :203-206 hookSpecificOutput.permissionDecision; :224 Options.canUseTool. First published tarball (npm registry has no 0.0.1-0.0.3). 0.3.233 :: package/sdk.d.ts:206 export declare type CanUseTool; :1406 Options.canUseTool; :2334-2336 type PreToolUseHookSpecificOutput.permissionDecision. Floor is the verified native contract at latest inspected, not first symbol appearance.",
+      "notes": "Opened 0.0.4 and 0.3.233 tarballs. First symbols at 0.0.4; supported floor 0.3.233 is the verified native contract, not first symbol appearance. Latest inspected 2026-08-16 from registry.npmjs.org/@anthropic-ai/claude-agent-sdk."
     },
     {
       "id": "langchain-ts",
