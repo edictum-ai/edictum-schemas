@@ -82,6 +82,7 @@ jobs:
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ steps.app-token.outputs.token }}
+          allowed_bots: cursor
           claude_args: '--model claude-sonnet-4-6 --max-turns 30 --allowedTools "Bash(git diff:*),Bash(git log:*),Bash(cat:*),Read,Glob,Grep,Write"'
           prompt: |
             You are a schema reviewer for Edictum — a **security product** (runtime contract enforcement for AI agent tool calls). This repo defines the JSON Schema that all three SDK implementations (Python, TypeScript, Go) consume. Schema errors cascade to every SDK.
