@@ -54,8 +54,9 @@ NULLABLE_ADAPTER = (
     "floor",
 )
 # Adapters with a native seam must keep both version fields as non-empty
-# strings. Nulls are allowed only on this explicit no-seam set, and only
-# when first_seam_version and floor are null together.
+# strings and unsupported_below equal to floor. Nulls are allowed only on
+# this explicit no-seam set, and only when first_seam_version and floor
+# are null together; those records keep an explanatory unsupported_below.
 NO_NATIVE_SEAM_ADAPTERS = frozenset({"langchaingo"})
 TABLE_FIELDS = ("id", "owner", "package", "seam", "first", "floor", "latest", "evidence")
 WEEKLY_MAX_AGE_DAYS = 7
@@ -186,6 +187,12 @@ def check_record_shape(record: dict[str, Any]) -> None:
                     raise RecordError(
                         f"{adapter_id}: {key} must be a non-empty string"
                     )
+            unsupported_below = adapter["unsupported_below"]
+            if unsupported_below != floor:
+                raise RecordError(
+                    f"{adapter_id}: unsupported_below must equal floor "
+                    f"for native-seam adapters, got {unsupported_below!r} != {floor!r}"
+                )
 
 
 def check_measured_at(record: dict[str, Any], *, today: date | None = None) -> None:

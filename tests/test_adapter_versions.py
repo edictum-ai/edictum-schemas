@@ -145,11 +145,23 @@ def test_seamed_adapter_both_null_versions_fail(tmp_path: Path) -> None:
         chk.check_paths(record_path, policy_path, today=today)
 
 
+def test_seamed_adapter_mismatched_unsupported_below_fails(tmp_path: Path) -> None:
+    record_path, policy_path = _copy_record(tmp_path)
+    today = _record_today(record_path)
+    data = json.loads(record_path.read_text(encoding="utf-8"))
+    seamed = next(a for a in data["adapters"] if a["id"] != "langchaingo")
+    seamed["unsupported_below"] = "unrelated-not-the-floor"
+    record_path.write_text(json.dumps(data), encoding="utf-8")
+    with pytest.raises(chk.RecordError, match="unsupported_below must equal floor"):
+        chk.check_paths(record_path, policy_path, today=today)
+
+
 def test_langchaingo_null_versions_pass() -> None:
     record = json.loads(chk.RECORD_PATH.read_text(encoding="utf-8"))
     go = next(a for a in record["adapters"] if a["id"] == "langchaingo")
     assert go["first_seam_version"] is None
     assert go["floor"] is None
+    assert go["unsupported_below"] == "all (no native block seam)"
     chk.check_paths(chk.RECORD_PATH, chk.POLICY_PATH)
 
 
