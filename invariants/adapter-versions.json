@@ -104,11 +104,11 @@
       "package": "langchain",
       "seam": "humanInTheLoopMiddleware",
       "first_seam_version": "1.0.1",
-      "first_seam_evidence": "langchain 1.0.1 :: package/dist/agents/middleware/hitl.d.ts:304 config type; index.d.ts:13 export; 1.0.0 404",
+      "first_seam_evidence": "langchain 1.0.1 :: package/dist/agents/middleware/hitl.d.ts:304 config type; index.d.ts:13 export. Opened last 0.x package 0.3.37: 1345 files, zero humanInTheLoopMiddleware hits. 1.0.0-alpha.9 already has hitl.d.ts:304; first stable is 1.0.1. 1.0.0 404.",
       "floor": "1.0.1",
       "latest_inspected": "1.5.9",
       "unsupported_below": "1.0.1",
-      "notes": "Opened 0.3.37, 1.0.1, 1.5.9 tarballs. HITL approval seam plus wrapToolCall."
+      "notes": "Opened 0.3.37, 1.0.0-alpha.9, 1.0.1, and 1.5.9 tarballs. Last 0.x has no HITL middleware. Seam first appears in 1.0.0-alpha.9; first stable is 1.0.1. HITL approval seam plus wrapToolCall."
     },
     {
       "id": "openai-agents-ts",
@@ -116,7 +116,7 @@
       "package": "@openai/agents",
       "seam": "needsApproval",
       "first_seam_version": "0.0.1",
-      "first_seam_evidence": "@openai/agents 0.0.1 :: @openai/agents-core package/dist/tool.d.ts:47 needsApproval; also tool.js:98 runImplementation.js:294",
+      "first_seam_evidence": "@openai/agents 0.0.1 :: @openai/agents-core package/dist/tool.d.ts:47 needsApproval; also tool.js:98 runImplementation.js:294. First published package version. Registry lists 0.0.1 first.",
       "floor": "0.0.1",
       "latest_inspected": "0.16.0",
       "unsupported_below": "0.0.1",
