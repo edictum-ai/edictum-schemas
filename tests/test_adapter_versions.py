@@ -1,0 +1,255 @@
+"""The adapter version record must parse, stay fresh, and match its Markdown copy."""
+
+from __future__ import annotations
+
+import importlib.util
+import json
+from datetime import date, timedelta
+from pathlib import Path
+from typing import Any
+
+import pytest
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+
+
+def _load_checker() -> Any:
+    path = REPO_ROOT / "scripts" / "check_adapter_versions.py"
+    spec = importlib.util.spec_from_file_location("check_adapter_versions", path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"cannot load {path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+chk = _load_checker()
+
+
+def _copy_record(tmp_path: Path) -> tuple[Path, Path]:
+    record_path = tmp_path / "adapter-versions.json"
+    policy_path = tmp_path / "ADAPTER_VERSION_POLICY.md"
+    record_path.write_text(chk.RECORD_PATH.read_text(encoding="utf-8"), encoding="utf-8")
+    policy_path.write_text(chk.POLICY_PATH.read_text(encoding="utf-8"), encoding="utf-8")
+    return record_path, policy_path
+
+
+def _record_today(record_path: Path) -> date:
+    data = json.loads(record_path.read_text(encoding="utf-8"))
+    return date.fromisoformat(data["measured_at"])
+
+
+def test_committed_record_is_valid() -> None:
+    chk.check_paths(chk.RECORD_PATH, chk.POLICY_PATH)
+
+
+def test_malformed_json_fails(tmp_path: Path) -> None:
+    record_path = tmp_path / "adapter-versions.json"
+    policy_path = tmp_path / "ADAPTER_VERSION_POLICY.md"
+    record_path.write_text("{not json", encoding="utf-8")
+    policy_path.write_text("| id |\n", encoding="utf-8")
+    with pytest.raises(chk.RecordError, match="malformed JSON"):
+        chk.check_paths(record_path, policy_path)
+
+
+def test_stale_measured_at_fails(tmp_path: Path) -> None:
+    record_path, policy_path = _copy_record(tmp_path)
+    data = json.loads(record_path.read_text(encoding="utf-8"))
+    today = date(2026, 8, 16)
+    data["measured_at"] = (today - timedelta(days=8)).isoformat()
+    record_path.write_text(json.dumps(data), encoding="utf-8")
+    with pytest.raises(chk.RecordError, match="days old"):
+        chk.check_paths(record_path, policy_path, today=today)
+
+
+def test_measured_at_exactly_seven_days_fails(tmp_path: Path) -> None:
+    record_path, policy_path = _copy_record(tmp_path)
+    data = json.loads(record_path.read_text(encoding="utf-8"))
+    today = date(2026, 8, 16)
+    data["measured_at"] = (today - timedelta(days=chk.WEEKLY_MAX_AGE_DAYS)).isoformat()
+    record_path.write_text(json.dumps(data), encoding="utf-8")
+    with pytest.raises(chk.RecordError, match="days old"):
+        chk.check_paths(record_path, policy_path, today=today)
+
+
+def test_fresh_measured_at_passes(tmp_path: Path) -> None:
+    record_path, policy_path = _copy_record(tmp_path)
+    data = json.loads(record_path.read_text(encoding="utf-8"))
+    today = date(2026, 8, 16)
+    data["measured_at"] = (
+        today - timedelta(days=chk.WEEKLY_MAX_AGE_DAYS - 1)
+    ).isoformat()
+    record_path.write_text(json.dumps(data), encoding="utf-8")
+    chk.check_paths(record_path, policy_path, today=today)
+
+
+def test_disagreement_fails(tmp_path: Path) -> None:
+    record_path, policy_path = _copy_record(tmp_path)
+    today = _record_today(record_path)
+    policy = policy_path.read_text(encoding="utf-8")
+    policy_path.write_text(policy.replace("| 1.3.15 |", "| 9.9.9 |", 1), encoding="utf-8")
+    with pytest.raises(chk.RecordError, match="disagree"):
+        chk.check_paths(record_path, policy_path, today=today)
+
+
+def test_null_required_adapter_field_fails(tmp_path: Path) -> None:
+    record_path, policy_path = _copy_record(tmp_path)
+    today = _record_today(record_path)
+    data = json.loads(record_path.read_text(encoding="utf-8"))
+    data["adapters"][0]["latest_inspected"] = None
+    record_path.write_text(json.dumps(data), encoding="utf-8")
+    with pytest.raises(chk.RecordError, match="latest_inspected must be a non-empty string"):
+        chk.check_paths(record_path, policy_path, today=today)
+
+
+def test_empty_required_adapter_field_fails(tmp_path: Path) -> None:
+    record_path, policy_path = _copy_record(tmp_path)
+    today = _record_today(record_path)
+    data = json.loads(record_path.read_text(encoding="utf-8"))
+    data["adapters"][0]["package"] = "   "
+    record_path.write_text(json.dumps(data), encoding="utf-8")
+    with pytest.raises(chk.RecordError, match="package must be a non-empty string"):
+        chk.check_paths(record_path, policy_path, today=today)
+
+
+@pytest.mark.parametrize("value", [None, "", "   "])
+def test_empty_when_latest_breaks_fails(tmp_path: Path, value: object) -> None:
+    record_path, policy_path = _copy_record(tmp_path)
+    today = _record_today(record_path)
+    data = json.loads(record_path.read_text(encoding="utf-8"))
+    data["when_latest_breaks"] = value
+    record_path.write_text(json.dumps(data), encoding="utf-8")
+    with pytest.raises(chk.RecordError, match="when_latest_breaks must be a non-empty string"):
+        chk.check_paths(record_path, policy_path, today=today)
+
+
+@pytest.mark.parametrize("value", [None, "", "   "])
+def test_empty_owner_mapping_fails(tmp_path: Path, value: object) -> None:
+    record_path, policy_path = _copy_record(tmp_path)
+    today = _record_today(record_path)
+    data = json.loads(record_path.read_text(encoding="utf-8"))
+    data["owners"]["python"] = value
+    record_path.write_text(json.dumps(data), encoding="utf-8")
+    with pytest.raises(chk.RecordError, match=r"owners\['python'\] must be a non-empty string"):
+        chk.check_paths(record_path, policy_path, today=today)
+
+
+def test_seamed_adapter_null_floor_fails(tmp_path: Path) -> None:
+    record_path, policy_path = _copy_record(tmp_path)
+    today = _record_today(record_path)
+    data = json.loads(record_path.read_text(encoding="utf-8"))
+    seamed = next(a for a in data["adapters"] if a["id"] != "langchaingo")
+    seamed["floor"] = None
+    record_path.write_text(json.dumps(data), encoding="utf-8")
+    with pytest.raises(chk.RecordError, match="first_seam_version and floor"):
+        chk.check_paths(record_path, policy_path, today=today)
+
+
+def test_seamed_adapter_both_null_versions_fail(tmp_path: Path) -> None:
+    record_path, policy_path = _copy_record(tmp_path)
+    today = _record_today(record_path)
+    data = json.loads(record_path.read_text(encoding="utf-8"))
+    seamed = next(a for a in data["adapters"] if a["id"] != "langchaingo")
+    seamed["first_seam_version"] = None
+    seamed["floor"] = None
+    record_path.write_text(json.dumps(data), encoding="utf-8")
+    with pytest.raises(chk.RecordError, match="without a native seam"):
+        chk.check_paths(record_path, policy_path, today=today)
+
+
+def test_seamed_adapter_mismatched_unsupported_below_fails(tmp_path: Path) -> None:
+    record_path, policy_path = _copy_record(tmp_path)
+    today = _record_today(record_path)
+    data = json.loads(record_path.read_text(encoding="utf-8"))
+    seamed = next(a for a in data["adapters"] if a["id"] != "langchaingo")
+    seamed["unsupported_below"] = "unrelated-not-the-floor"
+    record_path.write_text(json.dumps(data), encoding="utf-8")
+    with pytest.raises(chk.RecordError, match="unsupported_below must equal floor"):
+        chk.check_paths(record_path, policy_path, today=today)
+
+
+def test_langchaingo_null_versions_pass() -> None:
+    record = json.loads(chk.RECORD_PATH.read_text(encoding="utf-8"))
+    go = next(a for a in record["adapters"] if a["id"] == "langchaingo")
+    assert go["first_seam_version"] is None
+    assert go["floor"] is None
+    assert go["unsupported_below"] == chk.NO_NATIVE_SEAM_UNSUPPORTED_BELOW
+    chk.check_paths(chk.RECORD_PATH, chk.POLICY_PATH)
+
+
+def test_langchaingo_noncanonical_unsupported_below_fails(tmp_path: Path) -> None:
+    record_path, policy_path = _copy_record(tmp_path)
+    today = _record_today(record_path)
+    data = json.loads(record_path.read_text(encoding="utf-8"))
+    go = next(a for a in data["adapters"] if a["id"] == "langchaingo")
+    go["unsupported_below"] = "v0.1.0"
+    record_path.write_text(json.dumps(data), encoding="utf-8")
+    with pytest.raises(chk.RecordError, match="unsupported_below must be"):
+        chk.check_paths(record_path, policy_path, today=today)
+
+
+def test_langchaingo_concrete_versions_fail(tmp_path: Path) -> None:
+    record_path, policy_path = _copy_record(tmp_path)
+    today = _record_today(record_path)
+    data = json.loads(record_path.read_text(encoding="utf-8"))
+    go = next(a for a in data["adapters"] if a["id"] == "langchaingo")
+    go["first_seam_version"] = "v0.1.0"
+    go["floor"] = "v0.1.0"
+    go["unsupported_below"] = "v0.1.0"
+    record_path.write_text(json.dumps(data), encoding="utf-8")
+    with pytest.raises(chk.RecordError, match="must be null"):
+        chk.check_paths(record_path, policy_path, today=today)
+
+
+def test_impossible_version_interval_fails(tmp_path: Path) -> None:
+    record_path, policy_path = _copy_record(tmp_path)
+    today = _record_today(record_path)
+    data = json.loads(record_path.read_text(encoding="utf-8"))
+    seamed = next(a for a in data["adapters"] if a["id"] != "langchaingo")
+    seamed["first_seam_version"] = "99.0.0"
+    seamed["floor"] = "0.0.1"
+    seamed["unsupported_below"] = "0.0.1"
+    seamed["latest_inspected"] = "0.0.0"
+    record_path.write_text(json.dumps(data), encoding="utf-8")
+    with pytest.raises(chk.RecordError, match="first_seam_version <= floor <= latest_inspected"):
+        chk.check_paths(record_path, policy_path, today=today)
+
+
+def test_ci_runs_freshness_daily() -> None:
+    ci = (REPO_ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+    needle = f'cron: "{chk.CI_FRESHNESS_CRON}"'
+    if needle not in ci:
+        raise AssertionError(f"ci.yml missing daily freshness cron {needle!r}")
+
+
+def test_blank_line_mid_table_keeps_later_rows(tmp_path: Path) -> None:
+    record_path, policy_path = _copy_record(tmp_path)
+    today = _record_today(record_path)
+    policy = policy_path.read_text(encoding="utf-8")
+    needle = "| crewai |"
+    policy_path.write_text(policy.replace(needle, "\n" + needle, 1), encoding="utf-8")
+    chk.check_paths(record_path, policy_path, today=today)
+
+@pytest.mark.parametrize(
+    ("old", "new", "match"),
+    [
+        ("Cadence: weekly", "Cadence: monthly", "cadence"),
+        ("python / ts / go", "python / rust / go", "owner_summary"),
+        (
+            "flip the smoke-matrix row for that published version "
+            "(mark unsupported, drop it, or raise floor). A red CI job is not the record.",
+            "page the on-call and hope.",
+            "when_latest_breaks",
+        ),
+    ],
+)
+def test_policy_metadata_disagreement_fails(tmp_path: Path, old: str, new: str, match: str) -> None:
+    record_path, policy_path = _copy_record(tmp_path)
+    today = _record_today(record_path)
+    policy = policy_path.read_text(encoding="utf-8")
+    if old not in policy:
+        raise AssertionError(f"fixture policy missing {old!r}")
+    policy_path.write_text(policy.replace(old, new, 1), encoding="utf-8")
+    with pytest.raises(chk.RecordError, match=match):
+        chk.check_paths(record_path, policy_path, today=today)
+

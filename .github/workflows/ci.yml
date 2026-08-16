@@ -5,6 +5,10 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  schedule:
+    # Daily freshness: a mid-week measured_at must fail the day it turns
+    # 7 days old, not wait until the next Monday.
+    - cron: "17 6 * * *"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -21,7 +25,7 @@ jobs:
           node-version: "22"
 
       - name: Validate JSON is parseable
-        run: node --input-type=module -e "import { readFileSync } from 'fs'; JSON.parse(readFileSync('schemas/edictum-v1.schema.json', 'utf8')); JSON.parse(readFileSync('schemas/edictum-v2.schema.json', 'utf8'));"
+        run: node --input-type=module -e "import { readFileSync } from 'fs'; JSON.parse(readFileSync('schemas/edictum-v1.schema.json', 'utf8')); JSON.parse(readFileSync('schemas/edictum-v2.schema.json', 'utf8')); JSON.parse(readFileSync('invariants/adapter-versions.json', 'utf8'));"
 
       # edictum-v2.schema.json is the canonical schema (load_schema() returns
       # it); v1 is a deprecated compatibility alias. CI validated only the
@@ -41,5 +45,8 @@ jobs:
       # pyyaml is required, not optional: without it every test that reads
       # fixture content skipped silently and the suite still reported green.
       # tests/conftest.py fails the run if anything skips unexpectedly.
+      - name: Validate adapter version record
+        run: uv run python scripts/check_adapter_versions.py
+
       - name: Run tests
         run: uv run --with pytest --with pyyaml pytest tests/ -v -rs
