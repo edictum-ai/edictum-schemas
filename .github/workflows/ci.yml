@@ -21,11 +21,15 @@ jobs:
           node-version: "22"
 
       - name: Validate JSON is parseable
-        run: node --input-type=module -e "import { readFileSync } from 'fs'; JSON.parse(readFileSync('schemas/edictum-v1.schema.json', 'utf8'));"
+        run: node --input-type=module -e "import { readFileSync } from 'fs'; JSON.parse(readFileSync('schemas/edictum-v1.schema.json', 'utf8')); JSON.parse(readFileSync('schemas/edictum-v2.schema.json', 'utf8'));"
 
+      # edictum-v2.schema.json is the canonical schema (load_schema() returns
+      # it); v1 is a deprecated compatibility alias. CI validated only the
+      # alias, so a malformed canonical schema shipped green.
       - name: Validate JSON Schema structure
         run: |
-          npx ajv-cli@5 compile -s schemas/edictum-v1.schema.json --spec=draft2020
+          npx ajv-cli@5.0.0 compile -s schemas/edictum-v2.schema.json --spec=draft2020
+          npx ajv-cli@5.0.0 compile -s schemas/edictum-v1.schema.json --spec=draft2020
 
   test-python:
     runs-on: blacksmith-4vcpu-ubuntu-2404-arm
@@ -34,5 +38,8 @@ jobs:
 
       - uses: astral-sh/setup-uv@0c5e2b8115b80b4c7c5ddf6ffdd634974642d182 # v4
 
+      # pyyaml is required, not optional: without it every test that reads
+      # fixture content skipped silently and the suite still reported green.
+      # tests/conftest.py fails the run if anything skips unexpectedly.
       - name: Run tests
-        run: uv run --with pytest pytest tests/ -v
+        run: uv run --with pytest --with pyyaml pytest tests/ -v -rs
