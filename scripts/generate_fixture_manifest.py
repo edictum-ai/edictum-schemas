@@ -35,9 +35,43 @@ MANIFEST_PATH = FIXTURES_DIR / "manifest.json"
 MANIFEST_VERSION = 1
 
 
+def normalize_fixture_bytes(raw: bytes) -> bytes:
+    """Return fixture bytes with LF newlines so digests are checkout-stable.
+
+    Windows Git with ``core.autocrlf=true`` materializes CRLF. The committed
+    files and ``fixtures/manifest.json`` are LF. Hash the LF form so a
+    required-mode digest check does not fail on an otherwise identical tree.
+    """
+    return raw.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+
+
+def fixture_digest(raw: bytes) -> str:
+    """SHA-256 of LF-normalized fixture bytes."""
+    return hashlib.sha256(normalize_fixture_bytes(raw)).hexdigest()
+
+
 def fixture_files(directory: Path) -> list[Path]:
     """Return the suite files in one fixture directory, sorted by name."""
     return sorted(p for p in directory.glob("*.yaml") if p.is_file())
+
+
+def all_fixture_yaml(fixtures_dir: Path) -> list[Path]:
+    """Return every ``*.yaml`` under the fixture tree, including unsupported paths."""
+    return sorted(p for p in fixtures_dir.rglob("*.yaml") if p.is_file())
+
+
+def unsupported_fixture_yaml(fixtures_dir: Path) -> list[Path]:
+    """YAML that is not ``fixtures/<suite-dir>/<file>.yaml``.
+
+    A one-level glob never sees ``fixtures/foo.yaml`` or
+    ``fixtures/suite/nested/bar.yaml``. Those files must fail closed rather
+    than vanish from the inventory.
+    """
+    unsupported: list[Path] = []
+    for path in all_fixture_yaml(fixtures_dir):
+        if len(path.relative_to(fixtures_dir).parts) != 2:
+            unsupported.append(path)
+    return unsupported
 
 
 def suite_directories(fixtures_dir: Path) -> list[Path]:
@@ -48,7 +82,7 @@ def suite_directories(fixtures_dir: Path) -> list[Path]:
 def describe_file(path: Path) -> dict[str, Any]:
     """Extract the declared record for a single fixture suite file."""
     raw = path.read_bytes()
-    parsed = yaml.safe_load(raw.decode("utf-8"))
+    parsed = yaml.safe_load(normalize_fixture_bytes(raw).decode("utf-8"))
     if not isinstance(parsed, dict):
         raise ValueError(f"{path}: suite file must parse to a mapping")
 
@@ -69,12 +103,20 @@ def describe_file(path: Path) -> dict[str, Any]:
         "suite": parsed.get("suite"),
         "format_version": parsed.get("version"),
         "fixture_ids": ids,
-        "sha256": hashlib.sha256(raw).hexdigest(),
+        "sha256": fixture_digest(raw),
     }
 
 
 def build_manifest(fixtures_dir: Path = FIXTURES_DIR) -> dict[str, Any]:
     """Build the full manifest for the fixture tree."""
+    misplaced = unsupported_fixture_yaml(fixtures_dir)
+    if misplaced:
+        rels = [p.relative_to(fixtures_dir).as_posix() for p in misplaced]
+        raise ValueError(
+            "fixture YAML must live at fixtures/<suite>/<file>.yaml; "
+            f"unsupported placement: {rels}"
+        )
+
     suites: dict[str, Any] = {}
     total_files = 0
     total_fixtures = 0

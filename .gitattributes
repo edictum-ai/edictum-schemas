@@ -1,0 +1,4 @@
+# Fixture YAML is inventoried by a byte digest in fixtures/manifest.json.
+# Pin LF so Windows core.autocrlf=true cannot rewrite the files out from
+# under that digest. The generator also LF-normalizes before hashing.
+fixtures/**/*.yaml text eol=lf
