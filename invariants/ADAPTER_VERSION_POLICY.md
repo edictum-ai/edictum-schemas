@@ -32,6 +32,6 @@ How to measure: download the published tarball/wheel/module zip; open the typing
 - Vercel peer range >=6 <8. Smoke matrix: 6.0.0 / 6.0.256 / 7.0.0 / 7.0.66.
 - Claude TS floor 0.3.233 is the verified native contract, not first symbol appearance (0.0.4).
 - Google ADK plugin path needs 1.7.0+; callback path from 0.0.2.
-- Freshness: measured_at of 7 days or older is stale, so a Monday measurement fails the next Monday schedule instead of waiting until day 14.
-- LangChainGo: no block-capable native seam in published zips through v0.1.14. unsupported_below is the canonical token `all (no native block seam)`.
+- Freshness: measured_at of 7 days or older is stale. CI runs the check daily so a mid-week measurement cannot stay green until the following Monday.
+- LangChainGo: no block-capable native seam in published zips through v0.1.14. first/floor stay null; unsupported_below is the canonical token `all (no native block seam)`.
 - OpenAI Agents TS seam lives in @openai/agents-core, not the meta-package tarball.

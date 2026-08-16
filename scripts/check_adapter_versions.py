@@ -62,10 +62,36 @@ NO_NATIVE_SEAM_ADAPTERS = frozenset({"langchaingo"})
 NO_NATIVE_SEAM_UNSUPPORTED_BELOW = "all (no native block seam)"
 TABLE_FIELDS = ("id", "owner", "package", "seam", "first", "floor", "latest", "evidence")
 WEEKLY_MAX_AGE_DAYS = 7
+CI_FRESHNESS_CRON = "17 6 * * *"
 
 
 class RecordError(ValueError):
     """Adapter version record is not fit to ship."""
+
+
+def _parse_dotted_version(raw: str) -> tuple[int, ...]:
+    """Parse ``1.2.3`` or ``v1.2.3`` into a zero-padded comparable tuple."""
+    s = raw.strip()
+    if s[:1] in {"v", "V"}:
+        s = s[1:]
+    if not s:
+        raise RecordError(f"version {raw!r} is not a comparable dotted version")
+    parts = s.split(".")
+    nums: list[int] = []
+    for part in parts:
+        if not part.isdigit():
+            raise RecordError(f"version {raw!r} is not a comparable dotted version")
+        nums.append(int(part))
+    return tuple(nums)
+
+
+def _version_le(left: str, right: str) -> bool:
+    a = _parse_dotted_version(left)
+    b = _parse_dotted_version(right)
+    n = max(len(a), len(b))
+    a = a + (0,) * (n - len(a))
+    b = b + (0,) * (n - len(b))
+    return a <= b
 
 
 def _cell(value: Any) -> str:
@@ -176,11 +202,11 @@ def check_record_shape(record: dict[str, Any]) -> None:
                 f"{adapter_id}: first_seam_version and floor must both be null "
                 "or both be non-empty strings"
             )
-        if first_null:
-            if adapter_id not in NO_NATIVE_SEAM_ADAPTERS:
+        if adapter_id in NO_NATIVE_SEAM_ADAPTERS:
+            if not first_null:
                 raise RecordError(
-                    f"{adapter_id}: first_seam_version and floor may be null "
-                    "only for adapters without a native seam"
+                    f"{adapter_id}: first_seam_version and floor must be null "
+                    "for adapters without a native seam"
                 )
             unsupported_below = adapter["unsupported_below"]
             if unsupported_below != NO_NATIVE_SEAM_UNSUPPORTED_BELOW:
@@ -189,6 +215,11 @@ def check_record_shape(record: dict[str, Any]) -> None:
                     f"{NO_NATIVE_SEAM_UNSUPPORTED_BELOW!r} for adapters "
                     f"without a native seam, got {unsupported_below!r}"
                 )
+        elif first_null:
+            raise RecordError(
+                f"{adapter_id}: first_seam_version and floor may be null "
+                "only for adapters without a native seam"
+            )
         else:
             for key in NULLABLE_ADAPTER:
                 value = adapter[key]
@@ -201,6 +232,15 @@ def check_record_shape(record: dict[str, Any]) -> None:
                 raise RecordError(
                     f"{adapter_id}: unsupported_below must equal floor "
                     f"for native-seam adapters, got {unsupported_below!r} != {floor!r}"
+                )
+            latest = adapter["latest_inspected"]
+            if not (
+                _version_le(first, floor) and _version_le(floor, latest)
+            ):
+                raise RecordError(
+                    f"{adapter_id}: versions must satisfy "
+                    f"first_seam_version <= floor <= latest_inspected, "
+                    f"got {first!r} / {floor!r} / {latest!r}"
                 )
 
 

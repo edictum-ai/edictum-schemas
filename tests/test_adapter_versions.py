@@ -188,6 +188,40 @@ def test_langchaingo_noncanonical_unsupported_below_fails(tmp_path: Path) -> Non
         chk.check_paths(record_path, policy_path, today=today)
 
 
+def test_langchaingo_concrete_versions_fail(tmp_path: Path) -> None:
+    record_path, policy_path = _copy_record(tmp_path)
+    today = _record_today(record_path)
+    data = json.loads(record_path.read_text(encoding="utf-8"))
+    go = next(a for a in data["adapters"] if a["id"] == "langchaingo")
+    go["first_seam_version"] = "v0.1.0"
+    go["floor"] = "v0.1.0"
+    go["unsupported_below"] = "v0.1.0"
+    record_path.write_text(json.dumps(data), encoding="utf-8")
+    with pytest.raises(chk.RecordError, match="must be null"):
+        chk.check_paths(record_path, policy_path, today=today)
+
+
+def test_impossible_version_interval_fails(tmp_path: Path) -> None:
+    record_path, policy_path = _copy_record(tmp_path)
+    today = _record_today(record_path)
+    data = json.loads(record_path.read_text(encoding="utf-8"))
+    seamed = next(a for a in data["adapters"] if a["id"] != "langchaingo")
+    seamed["first_seam_version"] = "99.0.0"
+    seamed["floor"] = "0.0.1"
+    seamed["unsupported_below"] = "0.0.1"
+    seamed["latest_inspected"] = "0.0.0"
+    record_path.write_text(json.dumps(data), encoding="utf-8")
+    with pytest.raises(chk.RecordError, match="first_seam_version <= floor <= latest_inspected"):
+        chk.check_paths(record_path, policy_path, today=today)
+
+
+def test_ci_runs_freshness_daily() -> None:
+    ci = (REPO_ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+    needle = f'cron: "{chk.CI_FRESHNESS_CRON}"'
+    if needle not in ci:
+        raise AssertionError(f"ci.yml missing daily freshness cron {needle!r}")
+
+
 def test_blank_line_mid_table_keeps_later_rows(tmp_path: Path) -> None:
     record_path, policy_path = _copy_record(tmp_path)
     today = _record_today(record_path)
