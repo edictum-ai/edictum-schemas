@@ -86,8 +86,14 @@ def test_fresh_measured_at_passes(tmp_path: Path) -> None:
 def test_disagreement_fails(tmp_path: Path) -> None:
     record_path, policy_path = _copy_record(tmp_path)
     today = _record_today(record_path)
+    data = json.loads(record_path.read_text(encoding="utf-8"))
+    # Derive the needle from the record so a weekly latest_inspected bump
+    # cannot turn this replace into a silent no-op.
+    needle = f"| {data['adapters'][0]['latest_inspected']} |"
     policy = policy_path.read_text(encoding="utf-8")
-    policy_path.write_text(policy.replace("| 1.3.15 |", "| 9.9.9 |", 1), encoding="utf-8")
+    if needle not in policy:
+        raise AssertionError(f"fixture policy missing {needle!r}")
+    policy_path.write_text(policy.replace(needle, "| 9.9.9 |", 1), encoding="utf-8")
     with pytest.raises(chk.RecordError, match="disagree"):
         chk.check_paths(record_path, policy_path, today=today)
 
