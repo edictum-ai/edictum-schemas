@@ -1,0 +1,44 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "enabledManagers": [
+    "github-actions"
+  ],
+  "minimumReleaseAge": "15 days",
+  "internalChecksFilter": "strict",
+  "prCreation": "not-pending",
+  "timezone": "Europe/Berlin",
+  "schedule": [
+    "after 9am on monday"
+  ],
+  "labels": [
+    "dependencies"
+  ],
+  "dependencyDashboard": true,
+  "osvVulnerabilityAlerts": true,
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "minimumReleaseAge": "0 days",
+    "schedule": ["at any time"]
+  },
+  "packageRules": [
+    {
+      "description": "Majors (all managers): 30-day release-age floor. Vulnerability fixes bypass the floor (vulnerabilityAlerts).",
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "minimumReleaseAge": "30 days"
+    },
+    {
+      "description": "GitHub Actions: pin to commit SHA (the repo already SHA-pins; Renovate updates the SHA + the version comment), batch into one PR.",
+      "matchManagers": [
+        "github-actions"
+      ],
+      "groupName": "github-actions",
+      "pinDigests": true,
+      "commitMessagePrefix": "chore(deps):"
+    }
+  ]
+}

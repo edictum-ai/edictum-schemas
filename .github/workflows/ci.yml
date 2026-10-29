@@ -41,6 +41,11 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - uses: astral-sh/setup-uv@0c5e2b8115b80b4c7c5ddf6ffdd634974642d182 # v4
+        with:
+          # Pinned so the duration form of exclude-newer in pyproject.toml
+          # is parsed by a uv release known to support it. 0.13.4 is the
+          # minimum fix for GHSA-hq85-5cpj-mr62, as in edictum.
+          version: "0.13.4"
 
       # pyyaml is required, not optional: without it every test that reads
       # fixture content skipped silently and the suite still reported green.

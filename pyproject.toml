@@ -29,3 +29,11 @@ packages = ["src/edictum_schemas"]
 
 [tool.hatch.build.targets.sdist]
 include = ["src/edictum_schemas", "schemas"]
+
+[tool.uv]
+# Dependency cooldown: uv only picks files uploaded at least 15 days ago,
+# including the tools CI adds with `uv run --with`. This matches Renovate's
+# minimumReleaseAge in renovate.json. An advisory fix younger than 15 days
+# goes in [tool.uv.exclude-newer-package] with its GHSA id and minimum
+# fixing version in a comment.
+exclude-newer = "15 days"
