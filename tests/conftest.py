@@ -52,8 +52,8 @@ def _fail_unmarked_skip(report: Any, *, during: str) -> None:
 
 
 # wrapper=True (the current-style hook wrapper) instead of the deprecated
-# hookwrapper=True: CI installs an unpinned pytest, and the old protocol is
-# removed in pytest 9 — the guard must survive that upgrade.
+# hookwrapper=True: the old protocol is removed in pytest 9, and Renovate moves
+# the pinned pytest in uv.lock forward, so the guard must survive upgrades.
 @pytest.hookimpl(wrapper=True)
 def pytest_runtest_makereport(item: pytest.Item, call: Any):
     report = yield

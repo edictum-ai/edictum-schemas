@@ -1,0 +1,17 @@
+# Dependency cooldown: resolve only versions published at least 15 days ago
+# (21600 minutes), the same floor as Renovate's minimumReleaseAge in
+# renovate.json and uv's exclude-newer in pyproject.toml. An advisory fix
+# younger than 15 days goes in minimumReleaseAgeExclude as an exact version,
+# with its GHSA id and an "Expires:" date in a comment.
+minimumReleaseAge: 21600
+
+# Advisory exceptions to the floor, each pinned to the minimum fixing version.
+# Each entry has an "Expires:" date, the day the floor admits the version.
+# CI fails once that date is reached: delete the entry, run
+# `pnpm install --lockfile-only`, and confirm the lockfile doesn't change.
+minimumReleaseAgeExclude:
+  # GHSA-w74x-v6f9-j3xg, GHSA-wjr9-j795-jxcr, GHSA-xhq7-xmqj-769h,
+  # GHSA-333x-w4r6-6crp (fast-uri >=3.0.0 <3.1.9, reached through ajv).
+  # Minimum fixing version 3.1.9, published 2026-10-19.
+  # Expires: 2026-11-03
+  - fast-uri@3.1.9

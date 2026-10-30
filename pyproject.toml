@@ -21,6 +21,14 @@ classifiers = [
 [project.urls]
 Repository = "https://github.com/edictum-ai/edictum-schemas"
 
+[dependency-groups]
+# Test tools for CI, pinned exactly and locked in uv.lock. CI installs them
+# with `uv sync --frozen --group test`. Renovate (pep621) proposes updates.
+test = [
+    "pytest==9.1.1",
+    "pyyaml==6.0.3",
+]
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/edictum_schemas"]
 
@@ -32,7 +40,7 @@ include = ["src/edictum_schemas", "schemas"]
 
 [tool.uv]
 # Dependency cooldown: uv only picks files uploaded at least 15 days ago,
-# including the tools CI adds with `uv run --with`. This matches Renovate's
+# including the test group locked in uv.lock. This matches Renovate's
 # minimumReleaseAge in renovate.json. An advisory fix younger than 15 days
 # goes in [tool.uv.exclude-newer-package] with its GHSA id and minimum
 # fixing version in a comment.
