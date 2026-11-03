@@ -48,30 +48,9 @@ Workflow-specific `coding-guard` fixtures for Spec 017 P7 live under
 
 ## Install
 
-### Node.js (pnpm)
-
-```bash
-pnpm add @edictum/schemas
-```
-
-```js
-import schema from "@edictum/schemas";
-```
-
-### Python (pip / uv)
-
-```bash
-pip install edictum-schemas
-# or
-uv add edictum-schemas
-```
-
-```python
-from edictum_schemas import load_schema, schema_path
-
-schema = load_schema()       # dict
-path = schema_path()         # pathlib.Path
-```
+The schema and fixtures are not published to npm or PyPI yet. Use them from this
+repository at a pinned commit, for example as a git submodule or a CI checkout of a
+specific SHA. Registry packages will be announced here when they exist.
 
 ## License
 
